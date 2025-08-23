@@ -14,7 +14,7 @@
         {
         }
 
-        public function sendOtp(Request $request)
+        public static function sendOtp(Request $request)
         {
             $request->validate(['contact' => 'required']);
 
@@ -38,7 +38,7 @@
             return response()->json(['message' => 'OTP sent successfully']);
         }
 
-        public function verifyOtp(Request $request)
+        public static function verifyOtp(Request $request)
         {
             $request->validate([
                 'contact' => 'required',
