@@ -10,6 +10,7 @@
             'city_info' => 'City Info',
             'category_info' => 'Category Info',
             'extra_service_info' => 'Extra Service Info',
+            'vendor_info' => 'Vendor Information',
         ],
         'fields' => [
             'name' => 'Name',
@@ -27,13 +28,22 @@
             'governorate' => 'Governorate',
             'city' => 'City',
             'icon' => 'Icon',
+            'status'          => 'Status',
             'description' => 'Description',
+            'actioned_at'     => 'Actioned At',
+            'rejected_reason' => 'Rejected Reason',
+            'national_id_photo' => 'National ID Photo',
+            'actioned_by' => 'Actioned By',
         ],
         'navigation' => [
             'settings' => 'Settings',
             'user_management' => 'User Management',
         ],
         'resources' => [
+            'vendor' => [
+                'label' => 'Vendor',
+                'plural' => 'Vendors',
+            ],
             'country' => [
                 'label' => 'Country',
                 'plural' => 'Countries',
@@ -70,7 +80,7 @@
             [
                 'label' => 'Extra Service',
                 'plural' => 'Extra Services'
-            ]
+            ],
         ],
         'labels' => [
             'active' => 'Active',

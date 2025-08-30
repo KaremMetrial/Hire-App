@@ -9,7 +9,8 @@
             'governorate_info' => 'معلومات المحافظة',
             'city_info' => 'معلومات المدينة',
             'category_info' => 'معلومات الفئة',
-        'extra_service_info' => 'معلومات الخدمة الإضافية',
+            'extra_service_info' => 'معلومات الخدمة الإضافية',
+            'vendor_info' => 'معلومات المورد',
         ],
         'fields' => [
             'name' => 'الاسم',
@@ -27,13 +28,22 @@
             'governorate' => 'المحافظة',
             'city' => 'المدينة',
             'icon' => 'الرمز',
-            'description' => 'الوصف'
+            'description' => 'الوصف',
+            'status'          => 'الحالة',
+            'actioned_at'     => 'تاريخ المراجعة',
+            'rejected_reason' => 'سبب الرفض',
+            'national_id_photo' => 'صورة الهوية الوظنية',
+            'actioned_by' => 'المراجعة بواسطة'
         ],
         'navigation' => [
             'settings' => 'الإعدادات',
             'user_management' => 'إدارة المستخدمين',
         ],
         'resources' => [
+            'vendor' => [
+                'label' => 'المورد',
+                'plural' => 'الموردين',
+            ],
             'country' => [
                 'label' => 'دولة',
                 'plural' => 'الدول',
@@ -67,10 +77,10 @@
                 'plural' => 'الفئات'
             ],
             'extra_service' =>
-            [
-                'label' => 'خدمه اضافية',
-                'plural' => 'الخدمات الاضافية'
-            ]
+                [
+                    'label' => 'خدمه اضافية',
+                    'plural' => 'الخدمات الاضافية'
+                ]
         ],
         'labels' => [
             'active' => 'نشط',

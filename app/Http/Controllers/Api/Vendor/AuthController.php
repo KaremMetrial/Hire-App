@@ -11,6 +11,7 @@
     use App\Services\Vendor\RentalShopService;
     use App\Http\Resources\Vendor\VendorResourece;
     use App\Http\Resources\Vendor\RentalShopResourece;
+    use App\Http\Requests\Vendor\LoginRequest;
 
     class AuthController extends Controller
     {
@@ -53,5 +54,22 @@
                 DB::rollBack();
                 return $this->errorResponse(__('message.unexpected_error'). $e->getMessage());
             }
+        }
+        public function login(LoginRequest $request)
+        {
+            $validated = $request->validated();
+            $vendor = $this->authService->login($validated);
+
+            if (!$vendor) {
+                return $this->errorResponse(__('message.auth.login.invalid_credentials'));
+            }
+
+            $token = $vendor->createToken('vendor')->plainTextToken;
+
+            return $this->successResponse([
+                'token' => $token,
+                'vendor' => new VendorResourece($vendor),
+                'rental_shop' => new RentalShopResourece($vendor->rentalShops()->first()),
+            ], __('message.auth.login'));
         }
     }

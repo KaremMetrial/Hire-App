@@ -8,10 +8,12 @@
     use Illuminate\Database\Eloquent\Relations\BelongsToMany;
     use Illuminate\Database\Eloquent\SoftDeletes;
     use Illuminate\Foundation\Auth\User as Authenticatable;
+    use Laravel\Sanctum\HasApiTokens;
+    use Illuminate\Notifications\Notifiable;
 
     class Vendor extends Authenticatable
     {
-        use HasFactory, SoftDeletes;
+        use HasFactory, SoftDeletes, HasApiTokens, Notifiable;
 
         protected $fillable = [
             'name',

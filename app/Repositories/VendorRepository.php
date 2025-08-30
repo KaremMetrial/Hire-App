@@ -10,4 +10,8 @@ class VendorRepository implements VendorRepositoryInterface
     {
         return Vendor::create($data);
     }
+    public function findBy(string $field, string $value)
+    {
+        return Vendor::where($field, $value)->first();
+    }
 }

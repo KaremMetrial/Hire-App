@@ -206,6 +206,7 @@
             'length' => 'OTP length',
             'identifier' => 'Identifier',
             'type' => 'Type',
+            'password' => 'Password',
 
             'vendor' => [
                 'name' => 'Vendor name',
