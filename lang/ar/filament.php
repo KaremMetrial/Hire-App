@@ -7,6 +7,9 @@
             'language_info' => 'معلومات اللغة',
             'admin_info' => 'معلومات المشرف',
             'governorate_info' => 'معلومات المحافظة',
+            'city_info' => 'معلومات المدينة',
+            'category_info' => 'معلومات الفئة',
+        'extra_service_info' => 'معلومات الخدمة الإضافية',
         ],
         'fields' => [
             'name' => 'الاسم',
@@ -21,6 +24,10 @@
             'password' => 'كلمة المرور',
             'slug' => 'الرابط',
             'country' => 'الدولة',
+            'governorate' => 'المحافظة',
+            'city' => 'المدينة',
+            'icon' => 'الرمز',
+            'description' => 'الوصف'
         ],
         'navigation' => [
             'settings' => 'الإعدادات',
@@ -42,6 +49,27 @@
             'governorate' => [
                 'label' => 'المحافظة',
                 'plural' => 'المحافظات',
+            ],
+            'city' => [
+                'label' => 'المدينة',
+                'plural' => 'المدن'
+            ],
+            'transmission' => [
+                'label' => 'ناثق الحركة',
+                'plural' => 'ناقلات الحركه'
+            ],
+            'fuel' => [
+                'label' => 'الوقود',
+                'plural' => 'أنواع الوقود',
+            ],
+            'category' => [
+                'label' => 'فئة',
+                'plural' => 'الفئات'
+            ],
+            'extra_service' =>
+            [
+                'label' => 'خدمه اضافية',
+                'plural' => 'الخدمات الاضافية'
             ]
         ],
         'labels' => [

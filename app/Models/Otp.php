@@ -2,23 +2,51 @@
 
     namespace App\Models;
 
-    use Illuminate\Database\Eloquent\Factories\HasFactory;
     use Illuminate\Database\Eloquent\Model;
+    use Illuminate\Support\Facades\Hash;
 
     class Otp extends Model
     {
-        use HasFactory;
-
-        protected $fillable = ['user_id', 'otp_hash', 'expires_at', 'is_used'];
+        protected $fillable = [
+            'identifier',
+            'otp_hash',
+            'purpose',
+            'type',
+            'expires_at',
+            'consumed_at',
+        ];
 
         protected $casts = [
             'expires_at' => 'datetime',
-            'is_used' => 'boolean',
+            'consumed_at' => 'datetime',
         ];
 
-        public function user()
+        /*
+         * Check if the OTP is expired
+         */
+        public function isExpired(): bool
         {
-            return $this->belongsTo(User::class);
+            return now()->greaterThan($this->expires_at);
         }
 
+        /*
+         * Verify the OTP
+         */
+        public function verify(string $otp): bool
+        {
+            if ($this->isExpired() || $this->consumed_at) {
+                return false;
+            }
+
+            return Hash::check($otp, $this->otp_hash);
+        }
+
+        /*
+         * Consume the OTP
+         */
+        public function consume(): void
+        {
+            $this->consumed_at = now();
+            $this->save();
+        }
     }

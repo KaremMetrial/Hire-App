@@ -17,7 +17,6 @@ return new class extends Migration
 
             $table->foreignId('country_id')->constrained()->cascadeOnDelete();
 
-            $table->unique(['country_id']);
         });
     }
 

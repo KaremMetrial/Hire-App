@@ -1,40 +1,52 @@
 <?php
     namespace App\Services;
 
-    use App\Repositories\OtpRepository;
-    use Illuminate\Support\Facades\Hash;
-    use Illuminate\Support\Carbon;
+    use App\Models\User;
+    use App\Models\Vendor;
+    use Illuminate\Support\Str;
     use Illuminate\Support\Facades\Notification;
     use App\Notifications\SendOtpNotification;
+    use App\Repositories\Interfaces\OtpRepositoryInterface;
 
     class OtpService
     {
-        public function __construct(private OtpRepository $otpRepository) {}
+        protected OtpRepositoryInterface $otpRepository;
 
-        public function generateAndSend($user, $channel = ['mail', 'sms'])
+        public function __construct(OtpRepositoryInterface $otpRepository)
         {
-            $otp = rand(100000, 999999);
-            $otpHash = Hash::make($otp);
-            $expiresAt = Carbon::now()->addMinutes(10);
-
-            $this->otpRepository->create($user->id, $otpHash, $expiresAt);
-
-            Notification::send($user, new SendOtpNotification($otp, $channel));
+            $this->otpRepository = $otpRepository;
         }
 
-        public function verify($user, $otpInput)
+        public function sendOtp(string $identifier, string $type, string $purpose = 'pre_registration'): string
         {
-            $otpRecord = $this->otpRepository->latestValidOtp($user->id);
+            $otp = mt_rand(10000, 99999);
 
-            if (!$otpRecord) {
-                return false;
+            $this->otpRepository->createOtp($identifier, $otp, $purpose, $type);
+
+            if ($type === 'user') {
+                $user = User::where('email', $identifier)->orWhere('phone', $identifier)->first();
+            } else {
+                $user = Vendor::where('email', $identifier)->orWhere('phone', $identifier)->first();
             }
 
-            if (!Hash::check($otpInput, $otpRecord->otp_hash)) {
-                return false;
+            if ($user) {
+//                Notification::send($user, new SendOtpNotification($otp));
             }
 
-            $this->otpRepository->markUsed($otpRecord);
-            return true;
+            return $otp;
+        }
+
+        public function verifyOtp(string $identifier, string $otp, string $type, string $purpose = 'pre_registration'): bool
+        {
+            $existingOtp = $this->otpRepository->findValidOtp($identifier, $purpose, $type);
+
+            if (!$existingOtp) return false;
+
+            if (password_verify($otp, $existingOtp->otp_hash)) {
+                $this->otpRepository->consumeOtp($existingOtp);
+                return true;
+            }
+
+            return false;
         }
     }

@@ -197,6 +197,41 @@
             'name' => 'الاسم',
             'code' => 'الكود',
             'is_active' => 'الحالة النشطة',
+
+            'otp_code' => 'رمز التحقق (OTP)',
+            'target_type' => 'نوع المستهدف',
+            'target_id' => 'معرّف المستهدف',
+            'purpose' => 'الغرض',
+            'via' => 'طريقة الإرسال',
+            'length' => 'طول رمز التحقق',
+            'identifier' => 'معرف',
+            'type' => 'نوع',
+
+            'vendor' => [
+                'name' => 'اسم البائع',
+                'email' => 'البريد الإلكتروني للبائع',
+                'phone' => 'هاتف البائع',
+                'password' => 'كلمة مرور البائع',
+                'national_id_photo' => 'صورة الهوية الوطنية',
+            ],
+
+            'rentalShop' => [
+                'name' => 'اسم المتجر',
+                'phone' => 'هاتف المتجر',
+                'image' => 'صورة المتجر',
+                'is_active' => 'حالة المتجر',
+                'transport_license_photo' => 'صورة رخصة النقل',
+                'commerical_registration_photo' => 'صورة السجل التجاري',
+
+                'address' => [
+                    'latitude' => 'خط العرض',
+                    'longitude' => 'خط الطول',
+                    'country_id' => 'الدولة',
+                ],
+
+            ],
+
+
         ],
 
     ];

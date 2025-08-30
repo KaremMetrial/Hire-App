@@ -7,6 +7,9 @@
             'language_info' => 'Language Info',
             'admin_info' => 'Admin Info',
             'governorate_info' => 'Governorate Info',
+            'city_info' => 'City Info',
+            'category_info' => 'Category Info',
+            'extra_service_info' => 'Extra Service Info',
         ],
         'fields' => [
             'name' => 'Name',
@@ -21,6 +24,10 @@
             'password' => 'Password',
             'slug' => 'Slug',
             'country' => 'Country',
+            'governorate' => 'Governorate',
+            'city' => 'City',
+            'icon' => 'Icon',
+            'description' => 'Description',
         ],
         'navigation' => [
             'settings' => 'Settings',
@@ -43,6 +50,27 @@
                 'label' => 'Governorate',
                 'plural' => 'Governorates',
             ],
+            'city' => [
+                'label' => 'City',
+                'plural' => 'Cities',
+            ],
+            'transmission' => [
+                'label' => 'Transmission',
+                'plural' => 'Transmissions',
+            ],
+            'fuel' => [
+                'label' => 'Fuel',
+                'plural' => 'Fuels',
+            ],
+            'category' => [
+                'label' => 'Category',
+                'plural' => 'Categories',
+            ],
+            'extra_service' =>
+            [
+                'label' => 'Extra Service',
+                'plural' => 'Extra Services'
+            ]
         ],
         'labels' => [
             'active' => 'Active',

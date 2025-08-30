@@ -45,4 +45,12 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    /*
+     * OTP Relationship
+     */
+    public function otps()
+    {
+        return $this->morphMany(Otp::class, 'otpable');
+    }
+
 }

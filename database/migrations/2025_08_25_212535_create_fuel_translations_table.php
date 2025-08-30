@@ -11,13 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('otps', function (Blueprint $table) {
+        Schema::create('fuel_translations', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete();
-            $table->string('otp_hash');
-            $table->timestamp('expires_at');
-            $table->boolean('is_used')->default(false);
+            $table->string('name');
+            $table->string('locale')->index();
             $table->timestamps();
+
+            $table->foreignId('fuel_id')->constrained()->cascadeOnDelete();
+
+            $table->unique(['fuel_id', 'locale']);
         });
     }
 
@@ -26,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('otps');
+        Schema::dropIfExists('fuel_translations');
     }
 };

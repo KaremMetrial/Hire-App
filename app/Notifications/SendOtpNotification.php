@@ -3,40 +3,61 @@
     namespace App\Notifications;
 
     use Illuminate\Bus\Queueable;
+    use Illuminate\Notifications\Messages\MailMessage;
     use Illuminate\Notifications\Notification;
 
     class SendOtpNotification extends Notification
     {
         use Queueable;
 
-        public function __construct(private $otp, private $channels)
+        protected string $otp;
+
+        /**
+         * Create a new notification instance.
+         */
+
+        public function __construct(string $otp)
         {
+            $this->otp = $otp;
         }
 
-        public function via($notifiable)
+
+        /**
+         * Get the notification's delivery channels.
+         *
+         * @return array<int, string>
+         */
+        public function via(object $notifiable): array
         {
-            return $this->channels;
+            $channels = [];
+            if ($notifiable->email) {
+                $channels[] = 'mail';
+            }
+            // لو عندك SMS service ممكن تضيفه هنا
+            // $channels[] = 'sms';
+            return $channels;
         }
 
-        public function toMail($notifiable)
+        /**
+         * Get the mail representation of the notification.
+         */
+        public function toMail(object $notifiable): MailMessage
         {
-            /*
-             return (new MailMessage)
-                            ->subject('Your OTP Code')
-                            ->line("Your OTP is: {$this->otp}")
-                            ->line('It will expire in 10 minutes.');
-            */
+            return (new MailMessage)
+                ->subject('Your OTP Code')
+                ->line("Your OTP is: {$this->otp}")
+                ->line('It will expire in 10 minutes.');
         }
 
-        public function toSms($notifiable)
+        /**
+         * Get the array representation of the notification.
+         *
+         * @return array<string, mixed>
+         */
+        public function toArray(object $notifiable): array
         {
-            // Custom SMS logic (Twilio, etc.)
-            /*
-                 $twilio = new \Twilio\Rest\Client(env('TWILIO_SID'), env('TWILIO_AUTH_TOKEN'));
-                $twilio->messages->create($notifiable->phone, [
-                    'from' => env('TWILIO_PHONE_NUMBER'),
-                    'body' => "Your OTP is: {$this->otp}"
-                ]);
-            */
+            return [
+                //
+            ];
         }
     }
