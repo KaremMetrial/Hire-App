@@ -230,6 +230,11 @@
                     'country_id' => 'Country',
                 ],
             ],
+
+            'day_of_week' => 'Day of week',
+            'open_time' => 'Opening time',
+            'close_time' => 'Closing time',
+            'rental_shop_id' => 'Rental shop',
         ],
 
     ];

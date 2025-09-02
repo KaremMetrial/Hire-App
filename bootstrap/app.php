@@ -25,6 +25,7 @@
             health: '/up',
             then: function () {
                 Route::prefix('vendor')
+                    ->middleware('api')
                     ->name('vendor.')
                     ->group(base_path('routes/vendor.php'));
             }

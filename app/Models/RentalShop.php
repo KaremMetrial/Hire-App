@@ -5,10 +5,14 @@
     use App\Enums\RentalShopStatusEnum;
     use Illuminate\Database\Eloquent\Model;
     use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+    use Illuminate\Database\Eloquent\Relations\HasMany;
     use Illuminate\Database\Eloquent\Relations\MorphOne;
+    use Illuminate\Database\Eloquent\SoftDeletes;
 
     class RentalShop extends Model
     {
+        use SoftDeletes;
+
         protected $fillable = [
             'name',
             'phone',
@@ -38,11 +42,20 @@
                 ->withPivot('role')
                 ->withTimestamps();
         }
+
         /*
          * Relationships to Address
          */
         public function address(): MorphOne
         {
             return $this->morphOne(Address::class, 'addressable');
+        }
+
+        /*
+         * Relationships to WorkingDay
+         */
+        public function workingDays(): HasMany
+        {
+            return $this->hasMany(WorkingDay::class);
         }
     }

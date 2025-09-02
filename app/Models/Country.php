@@ -8,6 +8,7 @@
     use Illuminate\Database\Eloquent\Builder;
     use Illuminate\Database\Eloquent\Model;
     use Illuminate\Database\Eloquent\Relations\HasMany;
+    use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
     class Country extends Model implements TranslatableContract
     {
@@ -30,6 +31,7 @@
         {
             return $this->where('is_active', true);
         }
+
         /*
          * Scopes Query to search by name
          */
@@ -38,11 +40,20 @@
         {
             return $query->whereTranslationLike('name', "%{$search}%");
         }
+
         /*
          * Relationship to Governorates
          */
         public function governorates(): HasMany
         {
             return $this->hasMany(Governorate::class);
+        }
+
+        /*
+         * Relationship to Cities through Governorates
+         */
+        public function cities(): HasManyThrough
+        {
+            return $this->hasManyThrough(City::class, Governorate::class);
         }
     }

@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Filament\Resources\Vendors;
+namespace App\Filament\Resources\RentalShops;
 
-use App\Filament\Resources\Vendors\Pages\CreateVendor;
-use App\Filament\Resources\Vendors\Pages\EditVendor;
-use App\Filament\Resources\Vendors\Pages\ListVendors;
-use App\Filament\Resources\Vendors\Schemas\VendorForm;
-use App\Filament\Resources\Vendors\Tables\VendorsTable;
-use App\Models\Vendor;
+use App\Filament\Resources\RentalShops\Pages\CreateRentalShop;
+use App\Filament\Resources\RentalShops\Pages\EditRentalShop;
+use App\Filament\Resources\RentalShops\Pages\ListRentalShops;
+use App\Filament\Resources\RentalShops\Schemas\RentalShopForm;
+use App\Filament\Resources\RentalShops\Tables\RentalShopsTable;
+use App\Models\RentalShop;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -16,23 +16,21 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use UnitEnum;
-use App\Filament\Resources\Vendors\RelationManagers\RentalShopsRelationManager;
-
-class VendorResource extends Resource
+class RentalShopResource extends Resource
 {
-    protected static ?string $model = Vendor::class;
+    protected static ?string $model = RentalShop::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserGroup;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedBuildingStorefront;
     protected static string|UnitEnum|null $navigationGroup = null;
 
     public static function getLabel(): string
     {
-        return __('filament.resources.vendor.label'); // singular
+        return __('filament.resources.rental_shop.label'); // singular
     }
 
     public static function getPluralLabel(): string
     {
-        return __('filament.resources.vendor.plural'); // plural
+        return __('filament.resources.rental_shop.plural'); // plural
     }
 
     public static function getNavigationGroup(): ?string
@@ -40,30 +38,29 @@ class VendorResource extends Resource
         return __('filament.navigation.settings'); // group name
     }
 
-
     public static function form(Schema $schema): Schema
     {
-        return VendorForm::configure($schema);
+        return RentalShopForm::configure($schema);
     }
 
     public static function table(Table $table): Table
     {
-        return VendorsTable::configure($table);
+        return RentalShopsTable::configure($table);
     }
 
     public static function getRelations(): array
     {
         return [
-            'rentalShops' => RentalShopsRelationManager::class,
+            //
         ];
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => ListVendors::route('/'),
-//            'create' => CreateVendor::route('/create'),
-            'edit' => EditVendor::route('/{record}/edit'),
+            'index' => ListRentalShops::route('/'),
+            'create' => CreateRentalShop::route('/create'),
+            'edit' => EditRentalShop::route('/{record}/edit'),
         ];
     }
 

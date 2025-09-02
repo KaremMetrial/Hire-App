@@ -47,11 +47,11 @@
                 'provider' => 'admins',
             ],
             'vendor' => [
-                'driver' => 'sunctum',
+                'driver' => 'sanctum',
                 'provider' => 'vendors',
             ],
             'user' => [
-                'driver' => 'sunctum',
+                'driver' => 'sanctum',
                 'provider' => 'users',
             ],
         ],

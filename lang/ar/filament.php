@@ -11,6 +11,8 @@
             'category_info' => 'معلومات الفئة',
             'extra_service_info' => 'معلومات الخدمة الإضافية',
             'vendor_info' => 'معلومات المورد',
+            'rental_shop_info' => 'معلومات مكتب التأجير',
+            'brand_info'   => 'معلومات العلامة التجارية',
         ],
         'fields' => [
             'name' => 'الاسم',
@@ -29,11 +31,17 @@
             'city' => 'المدينة',
             'icon' => 'الرمز',
             'description' => 'الوصف',
-            'status'          => 'الحالة',
-            'actioned_at'     => 'تاريخ المراجعة',
+            'status' => 'الحالة',
+            'actioned_at' => 'تاريخ المراجعة',
             'rejected_reason' => 'سبب الرفض',
             'national_id_photo' => 'صورة الهوية الوظنية',
-            'actioned_by' => 'المراجعة بواسطة'
+            'actioned_by' => 'المراجعة بواسطة',
+            'national_id_photo' => 'صورة الهوية الوطنية',
+            'image' => 'الصورة',
+            'transport_license_photo' => 'صورة رخصة النقل',
+            'commerical_registration_photo' => 'صورة السجل التجاري',
+            'rating' => 'التقييم',
+            'count_rating' => 'عدد التقييمات',
         ],
         'navigation' => [
             'settings' => 'الإعدادات',
@@ -76,11 +84,18 @@
                 'label' => 'فئة',
                 'plural' => 'الفئات'
             ],
-            'extra_service' =>
-                [
-                    'label' => 'خدمه اضافية',
-                    'plural' => 'الخدمات الاضافية'
-                ]
+            'extra_service' => [
+                'label' => 'خدمه اضافية',
+                'plural' => 'الخدمات الاضافية'
+            ],
+            'rental_shop' => [
+                'label' => 'مكتب تأجير',
+                'plural' => 'مكاتب التأجير',
+            ],
+            'brand' => [
+                'label'  => 'علامة تجارية',
+                'plural' => 'العلامات التجارية',
+            ],
         ],
         'labels' => [
             'active' => 'نشط',
@@ -91,6 +106,11 @@
         'filters' => [
             'active' => 'حالة النشاط',
             'default' => 'افتراضي',
+        ],
+        'roles' => [
+            'role' => 'الدور',
+            'manager' => 'مدير',
+            'employee' => 'موظف',
         ],
 
     ];

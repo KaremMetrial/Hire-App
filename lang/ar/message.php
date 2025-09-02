@@ -20,11 +20,17 @@
         'otp.invalid' => 'OTP غير صحيح.',
         'otp.sent' => 'OTP تم ارساله بنجاح.',
         'otp.verified' => 'تم التحقق من OTP بنجاح.',
-
+        
         // Auth
-        'auth.register' => 'تم التسجيل بنجاح.',
-        'auth.login' => 'تم تسجيل الدخول بنجاح.',
-        'auth.logout' => 'تم تسجيل الخروج بنجاح.',
-        'auth.password_reset' => 'تم تغيير كلمة المرور بنجاح.',
-
+        'auth' => [
+            'register' => 'تم التسجيل بنجاح.',
+            'login' => 'تم تسجيل الدخول بنجاح.',
+            'logout' => 'تم تسجيل الخروج بنجاح.',
+            'password_reset' => 'تم تغيير كلمة المرور بنجاح.',
+        ],
+        
+        // Working Day
+        'working_day.created' => 'تم إنشاء يوم العمل بنجاح.',
+        'working_day.updated' => 'تم تحديث يوم العمل بنجاح.',
+        'working_day.index' => 'تم استرجاع أيام العمل بنجاح.',
     ];

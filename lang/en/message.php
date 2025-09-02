@@ -20,11 +20,17 @@
         'otp.invalid' => 'OTP invalid.',
         'otp.sent' => 'OTP sent successfully.',
         'otp.verified' => 'OTP verified successfully.'
-
+        
         // Auth
-        'auth.register' => 'Register successfully.',
-        'auth.login' => 'Login successfully.',
-        'auth.logout' => 'Logout successfully.',
-        'auth.password_reset' => 'Password reset successfully.',
-
-    ];
+        'auth' => [
+            'register' => 'Register successfully.',
+            'login' => 'Login successfully.',
+            'logout' => 'Logout successfully.',
+            'password_reset' => 'Password reset successfully.',
+        ],
+        
+        // Working Day
+        'working_day.created' => 'Working day has been created successfully.',
+        'working_day.updated' => 'Working day has been updated successfully.',
+        'working_day.index' => 'Working days retrieved successfully.',
+];

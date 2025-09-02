@@ -11,6 +11,8 @@
             'category_info' => 'Category Info',
             'extra_service_info' => 'Extra Service Info',
             'vendor_info' => 'Vendor Information',
+            'rental_shop_info' => 'Rental Shop Information',
+            'brand_info'   => 'Brand Information',
         ],
         'fields' => [
             'name' => 'Name',
@@ -28,12 +30,18 @@
             'governorate' => 'Governorate',
             'city' => 'City',
             'icon' => 'Icon',
-            'status'          => 'Status',
+            'status' => 'Status',
             'description' => 'Description',
-            'actioned_at'     => 'Actioned At',
+            'actioned_at' => 'Actioned At',
             'rejected_reason' => 'Rejected Reason',
             'national_id_photo' => 'National ID Photo',
             'actioned_by' => 'Actioned By',
+            'national_id_photo' => 'National ID Photo',
+            'image' => 'Image',
+            'transport_license_photo' => 'Transport License Photo',
+            'commerical_registration_photo' => 'Commercial Registration Photo',
+            'rating' => 'Rating',
+            'count_rating' => 'Rating Count',
         ],
         'navigation' => [
             'settings' => 'Settings',
@@ -76,10 +84,17 @@
                 'label' => 'Category',
                 'plural' => 'Categories',
             ],
-            'extra_service' =>
-            [
+            'extra_service' => [
                 'label' => 'Extra Service',
                 'plural' => 'Extra Services'
+            ],
+            'rental_shop' => [
+                'label' => 'Rental Shop',
+                'plural' => 'Rental Shops',
+            ],
+            'brand' => [
+                'label'  => 'Brand',
+                'plural' => 'Brands',
             ],
         ],
         'labels' => [
@@ -91,6 +106,11 @@
         'filters' => [
             'active' => 'Active Status',
             'default' => 'Default Status',
+        ],
+        'roles' => [
+            'role' => 'Role',
+            'manager' => 'Manager',
+            'employee' => 'Employee',
         ],
 
     ];
