@@ -35,7 +35,7 @@ class RentalShopResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return __('filament.navigation.settings'); // group name
+        return __('filament.navigation.inventory'); // group name
     }
 
     public static function form(Schema $schema): Schema

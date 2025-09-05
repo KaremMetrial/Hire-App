@@ -6,6 +6,11 @@
     use Illuminate\Support\Facades\Route;
     use App\Http\Controllers\Api\CountryController;
     use App\Http\Controllers\Api\BrandController;
+    use App\Http\Controllers\Api\ModelController;
+    use App\Http\Controllers\Api\FuelController;
+    use App\Http\Controllers\Api\TransmissionController;
+    use App\Http\Controllers\Api\CategoryController;
+
     // Api Version 1
     Route::prefix('v1')->group(function () {
 
@@ -17,6 +22,22 @@
         // Brand
         Route::get('/brands', [BrandController::class, 'index']);
         Route::get('/brands/{brand}', [BrandController::class, 'show']);
+
+        // Model
+        Route::get('/models', [ModelController::class, 'index']);
+        Route::get('/models/{model}', [ModelController::class, 'show']);
+
+        // Fuel
+        Route::get('/fuels', [FuelController::class, 'index']);
+        Route::get('/fuels/{fuel}', [FuelController::class, 'show']);
+
+        // Transmission
+        Route::get('/transmissions', [TransmissionController::class, 'index']);
+        Route::get('/transmissions/{transmission}', [TransmissionController::class, 'show']);
+
+        // Category
+        Route::get('/categories', [CategoryController::class, 'index']);
+        Route::get('/categories/{category}', [CategoryController::class, 'show']);
 
         // OTP
         Route::prefix('otp')->controller(OtpController::class)->group(function () {
@@ -36,7 +57,7 @@
             Route::prefix('working-day')->controller(WorkingDayController::class)->group(function () {
                 Route::get('{id}/index', 'index'); // get it by rental shop id
                 Route::post('/store', 'store');
-                Route::put('/{id}/update', 'update');
+                Route::put('{id}/update', 'update');
             });
         });
     });

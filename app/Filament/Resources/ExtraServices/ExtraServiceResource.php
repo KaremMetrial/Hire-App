@@ -34,7 +34,7 @@ class ExtraServiceResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return __('filament.navigation.settings'); // group name
+        return __('filament.navigation.inventory'); // group name
     }
 
     protected static ?string $recordTitleAttribute = '.';

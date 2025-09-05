@@ -13,11 +13,13 @@
             'vendor_info' => 'Vendor Information',
             'rental_shop_info' => 'Rental Shop Information',
             'brand_info'   => 'Brand Information',
+            'car_model_info' => 'Car Model Information',
         ],
         'fields' => [
             'name' => 'Name',
             'code' => 'Code',
             'active' => 'Active',
+            'is_active' => 'Is Active',
             'native_name' => 'Native Name',
             'direction' => 'Direction',
             'default' => 'Default',
@@ -42,10 +44,12 @@
             'commerical_registration_photo' => 'Commercial Registration Photo',
             'rating' => 'Rating',
             'count_rating' => 'Rating Count',
+            'brand' => 'Brand',
         ],
         'navigation' => [
             'settings' => 'Settings',
             'user_management' => 'User Management',
+            'inventory' => 'Inventory',
         ],
         'resources' => [
             'vendor' => [
@@ -95,6 +99,10 @@
             'brand' => [
                 'label'  => 'Brand',
                 'plural' => 'Brands',
+            ],
+            'car_model' => [
+                'label'  => 'Car Model',
+                'plural' => 'Car Models',
             ],
         ],
         'labels' => [

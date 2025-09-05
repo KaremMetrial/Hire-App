@@ -13,11 +13,13 @@
             'vendor_info' => 'معلومات المورد',
             'rental_shop_info' => 'معلومات مكتب التأجير',
             'brand_info'   => 'معلومات العلامة التجارية',
+            'car_model_info' => 'معلومات موديل السيارة',
         ],
         'fields' => [
             'name' => 'الاسم',
             'code' => 'الرمز',
             'active' => 'نشط',
+            'is_active' => 'مفعل',
             'native_name' => 'الاسم المحلي',
             'direction' => 'الاتجاه',
             'default' => 'افتراضي',
@@ -42,10 +44,12 @@
             'commerical_registration_photo' => 'صورة السجل التجاري',
             'rating' => 'التقييم',
             'count_rating' => 'عدد التقييمات',
+            'brand' => 'العلامة التجارية',
         ],
         'navigation' => [
             'settings' => 'الإعدادات',
             'user_management' => 'إدارة المستخدمين',
+            'inventory' => 'المخزون',
         ],
         'resources' => [
             'vendor' => [
@@ -95,6 +99,10 @@
             'brand' => [
                 'label'  => 'علامة تجارية',
                 'plural' => 'العلامات التجارية',
+            ],
+            'car_model' => [
+                'label'  => 'موديل سيارة',
+                'plural' => 'موديلات السيارات',
             ],
         ],
         'labels' => [

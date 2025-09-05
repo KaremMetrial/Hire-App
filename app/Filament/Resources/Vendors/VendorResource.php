@@ -37,7 +37,7 @@ class VendorResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return __('filament.navigation.settings'); // group name
+        return __('filament.navigation.user_management'); // group name
     }
 
 

@@ -34,7 +34,7 @@ class BrandResource extends Resource
 
     public static function getNavigationGroup(): ?string
     {
-        return __('filament.navigation.settings');
+        return __('filament.navigation.inventory');
     }
 
     public static function form(Schema $schema): Schema

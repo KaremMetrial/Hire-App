@@ -13,6 +13,8 @@
         'rate_limit_exceeded' => 'عدد كبير من الطلبات، يرجى المحاولة لاحقاً.',
         'database_error' => 'حدث خطأ في قاعدة البيانات.',
         'unexpected_error' => 'حدث خطأ غير متوقع، يرجى المحاولة لاحقاً.',
+        'success' => 'تمت العملية بنجاح.',
+
 
         // OTP
         'otp.not_found' => 'OTP غير موجود.',
@@ -20,7 +22,7 @@
         'otp.invalid' => 'OTP غير صحيح.',
         'otp.sent' => 'OTP تم ارساله بنجاح.',
         'otp.verified' => 'تم التحقق من OTP بنجاح.',
-        
+
         // Auth
         'auth' => [
             'register' => 'تم التسجيل بنجاح.',
@@ -28,7 +30,7 @@
             'logout' => 'تم تسجيل الخروج بنجاح.',
             'password_reset' => 'تم تغيير كلمة المرور بنجاح.',
         ],
-        
+
         // Working Day
         'working_day.created' => 'تم إنشاء يوم العمل بنجاح.',
         'working_day.updated' => 'تم تحديث يوم العمل بنجاح.',

@@ -8,19 +8,18 @@ use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Brand extends Model implements TranslatableContract
+class CarModel extends Model implements TranslatableContract
 {
     use HasFactory, Translatable;
-
+    protected $table = 'models';
+    protected $translationForeignKey = 'model_id';
     public $translatedAttributes = ['name'];
-
     protected $fillable = [
-        'image',
-        'is_active',
+       'is_active',
+        'brand_id',
     ];
-
     protected $casts = [
         'is_active' => 'boolean',
     ];
@@ -30,14 +29,13 @@ class Brand extends Model implements TranslatableContract
     {
         return $query->where('is_active', true);
     }
-
     #[Scope]
     public function searchName(Builder $query, string $search): Builder
     {
         return $query->whereTranslationLike('name', "%{$search}%");
     }
-    public function models(): HasMany
+    public function brand(): BelongsTo
     {
-        return $this->hasMany(CarModel::class, 'brand_id');
+        return $this->belongsTo(Brand::class);
     }
 }

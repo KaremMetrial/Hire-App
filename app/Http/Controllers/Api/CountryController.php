@@ -26,7 +26,7 @@ class CountryController extends Controller
 
         return $this->successResponse([
             'countries' => CountryResource::collection($countries)
-        ]);
+        ], __('message.success'));
     }
 
     public function show(Country $country): JsonResponse
@@ -37,7 +37,7 @@ class CountryController extends Controller
         return $this->successResponse([
             'country' => new CountryResource($country),
             'governorates' => GovernorateResource::collection($country->governorates),
-        ]);
+        ], __('message.success'));
     }
 
     public function cities(Country $country): JsonResponse
@@ -46,6 +46,6 @@ class CountryController extends Controller
 
         return $this->successResponse([
             'cities' => CityResource::collection($cities)
-        ]);
+        ], __('message.success'));
     }
 }
