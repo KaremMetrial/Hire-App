@@ -11,4 +11,5 @@
         \App\Repositories\Interfaces\FuelRepositoryInterface::class => \App\Repositories\FuelRepository::class,
         \App\Repositories\Interfaces\TransmissionRepositoryInterface::class => \App\Repositories\TransmissionRepository::class,
         \App\Repositories\Interfaces\CategoryRepositoryInterface::class => \App\Repositories\CategoryRepository::class,
+        \App\Repositories\Interfaces\CarRepositoryInterface::class => \App\Repositories\CarRepository::class,
     ];

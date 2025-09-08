@@ -10,6 +10,7 @@
     use App\Http\Controllers\Api\FuelController;
     use App\Http\Controllers\Api\TransmissionController;
     use App\Http\Controllers\Api\CategoryController;
+    use App\Http\Controllers\Api\CarController;
 
     // Api Version 1
     Route::prefix('v1')->group(function () {
@@ -59,5 +60,8 @@
                 Route::post('/store', 'store');
                 Route::put('{id}/update', 'update');
             });
+
+            // Car
+            Route::apiResource('/cars', CarController::class);
         });
     });
