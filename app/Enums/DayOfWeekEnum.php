@@ -12,6 +12,11 @@
         case SATURDAY = 1;
         case SUNDAY = 2;
 
+        public static function values(): array
+        {
+            return array_column(self::cases(), 'value');
+        }
+
         public function label(): string
         {
             return match ($this) {

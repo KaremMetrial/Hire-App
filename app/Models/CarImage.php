@@ -11,6 +11,7 @@
         protected $fillable = [
             'image',
             'image_name',
+            'car_id',
         ];
         protected $casts = [
             'image_name' => CarImageTypeEnum::class,

@@ -14,6 +14,7 @@
             'rental_shop_info' => 'معلومات مكتب التأجير',
             'brand_info'   => 'معلومات العلامة التجارية',
             'car_model_info' => 'معلومات موديل السيارة',
+            'insurance_info' => 'معلومات التأمين'
         ],
         'fields' => [
             'name' => 'الاسم',
@@ -45,11 +46,17 @@
             'rating' => 'التقييم',
             'count_rating' => 'عدد التقييمات',
             'brand' => 'العلامة التجارية',
+            'period' => 'المدة',
+            'price' => 'السعر',
+            'deposit_price' => 'سعر الوديعه',
+            'is_required' => 'مطلوب',
+            'title' => 'العنوان',
         ],
         'navigation' => [
             'settings' => 'الإعدادات',
             'user_management' => 'إدارة المستخدمين',
             'inventory' => 'المخزون',
+            'contracts' => 'العقود'
         ],
         'resources' => [
             'vendor' => [
@@ -104,6 +111,10 @@
                 'label'  => 'موديل سيارة',
                 'plural' => 'موديلات السيارات',
             ],
+            'insurance' => [
+                'label' => 'التأمين',
+                'plural' => 'التأمينات'
+            ]
         ],
         'labels' => [
             'active' => 'نشط',
@@ -114,6 +125,9 @@
         'filters' => [
             'active' => 'حالة النشاط',
             'default' => 'افتراضي',
+            'required' => 'مطلوب',
+            'optional' => 'اختياري',
+            'period' => 'المدة'
         ],
         'roles' => [
             'role' => 'الدور',

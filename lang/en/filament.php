@@ -14,6 +14,7 @@
             'rental_shop_info' => 'Rental Shop Information',
             'brand_info'   => 'Brand Information',
             'car_model_info' => 'Car Model Information',
+            'insurance_info' => 'Insurance Information'
         ],
         'fields' => [
             'name' => 'Name',
@@ -45,11 +46,17 @@
             'rating' => 'Rating',
             'count_rating' => 'Rating Count',
             'brand' => 'Brand',
+            'period' => 'Period',
+            'price' => 'Price',
+            'deposit_price' => 'Deposit Price',
+            'is_required' => 'Is Required',
+            'title' => 'Title',
         ],
         'navigation' => [
             'settings' => 'Settings',
             'user_management' => 'User Management',
             'inventory' => 'Inventory',
+            'contracts' => 'Contracts',
         ],
         'resources' => [
             'vendor' => [
@@ -104,6 +111,10 @@
                 'label'  => 'Car Model',
                 'plural' => 'Car Models',
             ],
+            'insurance' => [
+                'label' => 'Insurance',
+                'plural' => 'Insurances'
+            ]
         ],
         'labels' => [
             'active' => 'Active',
@@ -114,6 +125,9 @@
         'filters' => [
             'active' => 'Active Status',
             'default' => 'Default Status',
+            'required' => 'Required Status',
+            'optional' => 'Optional Status',
+            'period' => 'Period'
         ],
         'roles' => [
             'role' => 'Role',

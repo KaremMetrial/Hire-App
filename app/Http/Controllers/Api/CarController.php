@@ -40,7 +40,7 @@ class CarController extends Controller
 
     public function show(Car $car): JsonResponse
     {
-        $car->load('model', 'fuel', 'transmission', 'category', 'rentalShop', 'city');
+        $car->load('carModel', 'fuel', 'transmission', 'category', 'rentalShop', 'city', 'images', 'prices', 'mileages', 'availabilities', 'insurances');
 
         return $this->successResponse([
             'car' => new CarResource($car)

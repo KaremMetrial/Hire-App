@@ -2,6 +2,7 @@
 
     namespace App\Models;
 
+    use App\Enums\InsurancePeriodEnum;
     use Astrotomic\Translatable\Contracts\Translatable as TranslatableContract;
     use Astrotomic\Translatable\Translatable;
     use Illuminate\Database\Eloquent\Attributes\Scope;
@@ -9,21 +10,28 @@
     use Illuminate\Database\Eloquent\Model;
     use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
-    class ExtraService extends Model implements TranslatableContract
+    class Insurance extends Model implements TranslatableContract
     {
         use Translatable;
 
-        public $translatedAttributes = ['name', 'description'];
+        public $translatedAttributes = ['title', 'description'];
+
         protected $fillable = [
+            'period',
+            'price',
+            'deposit_price',
+            'is_required',
             'is_active',
         ];
         protected $casts = [
+            'is_required' => 'boolean',
             'is_active' => 'boolean',
+            'period' => InsurancePeriodEnum::class,
         ];
 
         /*
-           * Scopes Query to get Only Active Country
-           */
+         * Scopes Query to get Only Active Country
+         */
         #[Scope]
         protected function active(Builder $query)
         {
@@ -31,29 +39,19 @@
         }
 
         /*
-         * Scopes Query to search by name
+         * Scopes Query to search by title
          */
         #[Scope]
-        public function searchName(Builder $query, string $search): Builder
+        public function searchTitle(Builder $query, string $search): Builder
         {
-            return $query->whereTranslationLike('name', "%{$search}%");
+            return $query->whereTranslationLike('title', "%{$search}%");
         }
 
         /*
-     * Scopes Query to search by description
-     */
-        #[Scope]
-        public function searchDescription(Builder $query, string $search): Builder
-        {
-            return $query->whereTranslationLike('description', "%{$search}%");
-        }
-
-        /*
-         * Relation
+         * Relations
          */
         public function cars(): BelongsToMany
         {
-            return $this->belongsToMany(Car::class)
-                ->withPivot('price');
+            return $this->belongsToMany(Car::class);
         }
     }

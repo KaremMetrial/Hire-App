@@ -11,6 +11,8 @@
     use App\Http\Controllers\Api\TransmissionController;
     use App\Http\Controllers\Api\CategoryController;
     use App\Http\Controllers\Api\CarController;
+    use App\Http\Controllers\Api\ExtraServiceController;
+    use App\Http\Controllers\Api\InsuranceController;
 
     // Api Version 1
     Route::prefix('v1')->group(function () {
@@ -39,6 +41,14 @@
         // Category
         Route::get('/categories', [CategoryController::class, 'index']);
         Route::get('/categories/{category}', [CategoryController::class, 'show']);
+
+        // Extra Service
+        Route::get('/extra-services', [ExtraServiceController::class, 'index']);
+        Route::get('/extra-services/{extra_service}', [ExtraServiceController::class, 'show']);
+
+        // Insurance
+        Route::get('/insurances', [InsuranceController::class, 'index']);
+        Route::get('/insurances/{insurance}', [InsuranceController::class, 'show']);
 
         // OTP
         Route::prefix('otp')->controller(OtpController::class)->group(function () {

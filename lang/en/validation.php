@@ -235,6 +235,42 @@
             'open_time' => 'Opening time',
             'close_time' => 'Closing time',
             'rental_shop_id' => 'Rental shop',
+
+            'city' => 'City',
+            'model' => 'Model',
+            'year_of_manufacture' => 'Year of manufacture',
+            'fuel' => 'Fuel',
+            'category' => 'Category',
+            'transmission' => 'Transmission',
+            'num_of_seat' => 'Number of seats',
+            'kilometers' => 'Kilometers',
+            'images' => 'Images',
+            'image' => 'Image',
+            'image_name' => 'Image name',
+
+            'prices' => 'Prices',
+            'price' => 'Price',
+            'duration_type' => 'Duration type',
+
+            'mileages' => 'Mileages',
+            'limit_km_per_day' => 'limit km per day',
+            'limit_km_per_hour' => 'limit km per hour',
+            'extra_fee' => 'extra fee',
+
+            'availabilities' => 'Availabilities',
+            'is_available' => 'Is available',
+            'unavailable_from' => 'Unavailable from',
+            'unavailable_to' => 'Unavailable to',
+            'reason' => 'Reason',
+
+            'insurances' => 'Insurances',
+            'rental_shop_rule' => 'Rental Shop Rule',
+            'extra_services' => 'Extra services',
+            'extra_service' => 'Extra service',
+            'custom_extra_services' => 'Custom extra services',
+            'custom_extra_services_name' => 'Custom extra services name',
+            'custom_extra_services_description' => 'Custom extra services description',
+            'price' => 'Price',
         ],
 
     ];

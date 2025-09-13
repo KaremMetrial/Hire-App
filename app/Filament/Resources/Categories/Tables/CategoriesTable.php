@@ -28,6 +28,7 @@ class CategoriesTable
                 ImageColumn::make('icon')
                     ->label(__('filament.fields.icon'))
                     ->square()
+                    ->disk('public')
                     ->toggleable(),
             ])
             ->filters([

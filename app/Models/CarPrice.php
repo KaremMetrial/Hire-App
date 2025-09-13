@@ -12,6 +12,7 @@ class CarPrice extends Model
         'duration_type',
         'price',
         'is_active',
+        'car_id',
     ];
     protected $casts = [
         'is_active' => 'boolean',

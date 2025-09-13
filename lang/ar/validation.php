@@ -236,6 +236,42 @@
             'open_time' => 'وقت الفتح',
             'close_time' => 'وقت الإغلاق',
             'rental_shop_id' => 'المتجر',
+
+            'city' => 'المدينة',
+            'model' => 'الموديل',
+            'year_of_manufacture' => 'سنة الصنع',
+            'fuel' => 'نوع الوقود',
+            'category' => 'الفئة',
+            'transmission' => 'نوع النقل',
+            'num_of_seat' => 'عدد الكراسي',
+            'kilometers' => 'المسافة',
+            'images' => 'الصور',
+            'image' => 'الصورة',
+            'image_name' => 'اسم الصورة',
+
+            'prices' => 'أسعار',
+            'price' => 'السعر',
+            'duration_type' => 'نوع المدة',
+
+            'mileages' => 'مسارات',
+            'limit_km_per_day' => 'مسافة الحد الأقص فى اليوم',
+            'limit_km_per_hour' => 'مسافة الحد الأقص فى الساعة',
+            'extra_fee' => 'رسوم إضافية',
+
+            'availabilities' => 'مواعيد الحجز',
+            'is_available' => 'هل متاح',
+            'unavailable_from' => 'غير متاح من',
+            'unavailable_to' => 'غير متاح إلى',
+            'reason' => 'السبب',
+
+            'insurances' => 'التامين',
+            'rental_shop_rule' => 'قواعد المكتب',
+            'extra_services' => 'الخدمات الإضافية',
+            'extra_service' => 'الخدمة الإضافية',
+            'custom_extra_services' => 'الخدمات الإضافية المخصصة',
+            'custom_extra_services_name' => 'اسم الخدمات الإضافية المخصصة',
+            'custom_extra_services_description' => 'وصف الخدمات الإضافية المخصصة',
+            'price' => 'السعر',
         ],
 
     ];

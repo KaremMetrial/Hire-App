@@ -37,14 +37,14 @@ class ExtraServiceForm
                 // Extra Service Info section
                 Section::make(__('filament.sections.extra_service_info'))
                     ->schema([
-                        FileUpload::make('icon')
-                            ->label(__('filament.fields.icon'))
-                            ->image()
-                            ->directory('extra-services/icons')
-                            ->imagePreviewHeight('100')
-                            ->maxSize(1024) // 1MB
-                            ->disk('public')
-                            ->columnSpanFull(),
+//                        FileUpload::make('icon')
+//                            ->label(__('filament.fields.icon'))
+//                            ->image()
+//                            ->directory('extra-services/icons')
+//                            ->imagePreviewHeight('100')
+//                            ->maxSize(1024) // 1MB
+//                            ->disk('public')
+//                            ->columnSpanFull(),
 
                         Toggle::make('is_active')
                             ->label(__('filament.fields.active'))

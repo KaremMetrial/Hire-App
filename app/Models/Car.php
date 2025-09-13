@@ -6,6 +6,7 @@
     use Illuminate\Database\Eloquent\Builder;
     use Illuminate\Database\Eloquent\Model;
     use Illuminate\Database\Eloquent\Relations\BelongsTo;
+    use Illuminate\Database\Eloquent\Relations\BelongsToMany;
     use Illuminate\Database\Eloquent\Relations\HasMany;
     use Illuminate\Database\Eloquent\Relations\HasOne;
 
@@ -25,8 +26,9 @@
             'rental_shop_id',
             'city_id',
             'is_active',
+            'rental_shop_rule'
         ];
-        protected $cast = [
+        protected $casts = [
             'is_active' => 'boolean'
         ];
 
@@ -38,7 +40,7 @@
 
         public function carModel(): BelongsTo
         {
-            return $this->belongsTo(CarModel::class);
+            return $this->belongsTo(CarModel::class, 'model_id');
         }
 
         public function fuel(): BelongsTo
@@ -81,5 +83,18 @@
         public function availabilities(): HasMany
         {
             return $this->hasMany(CarAvailability::class);
+        }
+        public function insurances(): BelongsToMany
+        {
+            return $this->belongsToMany(Insurance::class);
+        }
+        public function deliveryOptions(): HasMany
+        {
+            return $this->hasMany(DeliveryOption::class);
+        }
+        public function services(): BelongsToMany
+        {
+            return $this->belongsToMany(ExtraService::class)
+                ->withPivot('price');
         }
     }
