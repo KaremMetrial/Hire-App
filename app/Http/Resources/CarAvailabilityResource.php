@@ -11,9 +11,10 @@ class CarAvailabilityResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'start_date' => $this->start_date, // Assuming this attribute exists
-            'end_date' => $this->end_date, // Assuming this attribute exists
-            'is_available' => $this->is_available, // Assuming this attribute exists
+            'is_available' => (bool) $this->is_available,
+            'unavailable_from' => $this->unavailable_from?->format('Y-m-d'),
+            'unavailable_to' => $this->unavailable_to?->format('Y-m-d'),
+            'reason' => $this->reason,
         ];
     }
 }

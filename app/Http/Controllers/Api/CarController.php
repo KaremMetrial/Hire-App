@@ -32,6 +32,8 @@ class CarController extends Controller
     public function store(StoreCarRequest $request): JsonResponse
     {
         $car = $this->carService->store($request->validated());
+        $car->refresh();
+        $car->load('carModel', 'fuel', 'transmission', 'category', 'rentalShop.address', 'city', 'images', 'prices', 'mileages', 'availabilities', 'insurances');
 
         return $this->successResponse([
             'car' => new CarResource($car)
@@ -41,7 +43,6 @@ class CarController extends Controller
     public function show(Car $car): JsonResponse
     {
         $car->load('carModel', 'fuel', 'transmission', 'category', 'rentalShop', 'city', 'images', 'prices', 'mileages', 'availabilities', 'insurances');
-
         return $this->successResponse([
             'car' => new CarResource($car)
         ]);

@@ -37,26 +37,11 @@
                                     fn($record) => $record->translate(app()->getLocale())->name ?? $record->id
                                 )
                                 ->getSearchResultsUsing(function (string $search) {
-                                    return \App\Models\Governorate::whereHas(
-                                        'translations',
-                                        function ($query) use ($search) {
-                                            $query->where('locale', app()->getLocale())
-                                                ->where('name', 'like', "%{$search}%");
-                                        }
-                                    )
-                                        ->with([
-                                            'translations' => function ($query) {
-                                                $query->where('locale', app()->getLocale());
-                                            }
-                                        ])
+                                    return \App\Models\Governorate::query()
+                                        ->searchName($search)
                                         ->limit(50)
                                         ->get()
-                                        ->mapWithKeys(function ($governorate) {
-                                            $name = optional(
-                                                $governorate->translate(app()->getLocale())
-                                            )->name ?? $governorate->id;
-                                            return [$governorate->id => $name];
-                                        });
+                                        ->pluck('name', 'id');
                                 })
                                 ->searchable()
                                 ->required()

@@ -14,7 +14,8 @@
             'rental_shop_info' => 'Rental Shop Information',
             'brand_info'   => 'Brand Information',
             'car_model_info' => 'Car Model Information',
-            'insurance_info' => 'Insurance Information'
+            'insurance_info' => 'Insurance Information',
+            'car_info' => 'Car Information',
         ],
         'fields' => [
             'name' => 'Name',
@@ -39,8 +40,8 @@
             'rejected_reason' => 'Rejected Reason',
             'national_id_photo' => 'National ID Photo',
             'actioned_by' => 'Actioned By',
-            'national_id_photo' => 'National ID Photo',
             'image' => 'Image',
+            'image_name' => 'Image Type',
             'transport_license_photo' => 'Transport License Photo',
             'commerical_registration_photo' => 'Commercial Registration Photo',
             'rating' => 'Rating',
@@ -51,6 +52,16 @@
             'deposit_price' => 'Deposit Price',
             'is_required' => 'Is Required',
             'title' => 'Title',
+            'model' => 'Model',
+            'rental_shop' => 'Rental Shop',
+            'year_of_manufacture' => 'Year of Manufacture',
+            'color' => 'Color',
+            'license_plate' => 'License Plate',
+            'num_of_seat' => 'Number of Seats',
+            'kilometers' => 'Kilometers',
+            'fuel' => 'Fuel',
+            'transmission' => 'Transmission',
+            'category' => 'Category',
         ],
         'navigation' => [
             'settings' => 'Settings',
@@ -114,6 +125,10 @@
             'insurance' => [
                 'label' => 'Insurance',
                 'plural' => 'Insurances'
+            ],
+            'car' => [
+                'label' => 'Car',
+                'plural' => 'Cars'
             ]
         ],
         'labels' => [

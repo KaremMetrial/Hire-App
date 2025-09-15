@@ -11,8 +11,8 @@ class CarImageResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'image_path' => $this->image_path, // Assuming this attribute exists
-            'type' => $this->type, // Assuming this attribute exists
+            'image_name' => $this->image_name,
+            'image' => $this->image ? asset('storage/'. $this->image) : null,
         ];
     }
 }

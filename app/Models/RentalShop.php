@@ -3,6 +3,8 @@
     namespace App\Models;
 
     use App\Enums\RentalShopStatusEnum;
+    use Illuminate\Database\Eloquent\Attributes\Scope;
+    use Illuminate\Database\Eloquent\Builder;
     use Illuminate\Database\Eloquent\Model;
     use Illuminate\Database\Eloquent\Relations\BelongsToMany;
     use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -32,6 +34,12 @@
             'status' => RentalShopStatusEnum::class,
             'actioned_at' => 'datetime',
         ];
+
+        #[Scope]
+        public function searchName(Builder $query, string $search): Builder
+        {
+            return $query->where('name', 'like', "%{$search}%");
+        }
 
         /*
          * Relationships to Vendor

@@ -2,9 +2,9 @@
 
 namespace App\Http\Resources;
 
-use App\Filament\Resources\RentalShops\RentalShopResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use App\Http\Resources\Vendor\RentalShopResourece;
 
 class CarResource extends JsonResource
 {
@@ -15,14 +15,14 @@ class CarResource extends JsonResource
             'year_of_manufacture' => $this->year_of_manufacture,
             'color' => $this->color,
             'license_plate' => $this->license_plate,
-            'num_of_seat' => $this->num_of_seat,
-            'kilometers' => $this->kilometers,
-            'is_active' => $this->is_active,
+            'num_of_seat' => (int) $this->num_of_seat,
+            'kilometers' => (int) $this->kilometers,
+            'is_active' => (bool) $this->is_active,
             'model' => new ModelResource($this->whenLoaded('carModel')),
             'fuel' => new FuelResource($this->whenLoaded('fuel')),
             'transmission' => new TransmissionResource($this->whenLoaded('transmission')),
             'category' => new CategoryResource($this->whenLoaded('category')),
-            'rental_shop' => new RentalShopResource($this->whenLoaded('rentalShop')),
+            'rental_shop' => new RentalShopResourece($this->whenLoaded('rentalShop')),
             'city' => new CityResource($this->whenLoaded('city')),
             'images' => CarImageResource::collection($this->whenLoaded('images')),
             'prices' => CarPriceResource::collection($this->whenLoaded('prices')),

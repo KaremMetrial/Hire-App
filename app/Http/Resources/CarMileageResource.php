@@ -11,8 +11,9 @@ class CarMileageResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'mileage' => $this->mileage, // Assuming this attribute exists
-            'unit' => $this->unit, // Assuming this attribute exists
+            'limit_km_per_day' => $this->limit_km_per_day,
+            'limit_km_per_hour' => $this->limit_km_per_hour,
+            'extra_fee' => $this->extra_fee,
         ];
     }
 }

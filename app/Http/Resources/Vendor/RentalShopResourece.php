@@ -28,8 +28,8 @@ class RentalShopResourece extends JsonResource
             'status_label' => $this->status?->label(),
             'actioned_at' => $this->actioned_at,
             'rejected_reason' => $this->rejected_reason,
-            'rating' => $this->rating,
-            'count_rating' => $this->count_rating,
+            'rating' => (int) $this->rating,
+            'count_rating' => (int) $this->count_rating,
             'address' => new AddressResourece($this->address),
         ];
     }

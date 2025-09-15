@@ -14,7 +14,8 @@
             'rental_shop_info' => 'معلومات مكتب التأجير',
             'brand_info'   => 'معلومات العلامة التجارية',
             'car_model_info' => 'معلومات موديل السيارة',
-            'insurance_info' => 'معلومات التأمين'
+            'insurance_info' => 'معلومات التأمين',
+            'car_info' => 'معلومات السيارة',
         ],
         'fields' => [
             'name' => 'الاسم',
@@ -39,8 +40,8 @@
             'rejected_reason' => 'سبب الرفض',
             'national_id_photo' => 'صورة الهوية الوظنية',
             'actioned_by' => 'المراجعة بواسطة',
-            'national_id_photo' => 'صورة الهوية الوطنية',
             'image' => 'الصورة',
+            'image_name' => 'نوع الصورة',
             'transport_license_photo' => 'صورة رخصة النقل',
             'commerical_registration_photo' => 'صورة السجل التجاري',
             'rating' => 'التقييم',
@@ -51,6 +52,16 @@
             'deposit_price' => 'سعر الوديعه',
             'is_required' => 'مطلوب',
             'title' => 'العنوان',
+            'model' => 'الموديل',
+            'rental_shop' => 'مكتب التأجير',
+            'year_of_manufacture' => 'سنة الصنع',
+            'color' => 'اللون',
+            'license_plate' => 'رقم اللوحة',
+            'num_of_seat' => 'عدد المقاعد',
+            'kilometers' => 'الكيلومترات',
+            'fuel' => 'الوقود',
+            'transmission' => 'ناقل الحركة',
+            'category' => 'الفئة',
         ],
         'navigation' => [
             'settings' => 'الإعدادات',
@@ -114,6 +125,10 @@
             'insurance' => [
                 'label' => 'التأمين',
                 'plural' => 'التأمينات'
+            ],
+            'car' => [
+                'label' => 'سيارة',
+                'plural' => 'السيارات'
             ]
         ],
         'labels' => [
