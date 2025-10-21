@@ -1,9 +1,14 @@
 <?php
 
-    namespace App\Repositories\Interfaces;
+namespace App\Repositories\Interfaces;
 
-    interface VendorRepositoryInterface
-    {
-        public function create($data);
-        public function findBy(string $field, string $value);
-    }
+use App\Models\Vendor;
+
+interface VendorRepositoryInterface
+{
+    public function create($data);
+
+    public function findBy(string $field, string $value);
+
+    public function update(Vendor $vendor, array $data);
+}

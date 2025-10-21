@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Repositories;
 
 use App\Models\Vendor;
@@ -10,8 +11,14 @@ class VendorRepository implements VendorRepositoryInterface
     {
         return Vendor::create($data);
     }
+
     public function findBy(string $field, string $value)
     {
         return Vendor::where($field, $value)->first();
+    }
+
+    public function update(Vendor $vendor, array $data)
+    {
+        return $vendor->update($data);
     }
 }

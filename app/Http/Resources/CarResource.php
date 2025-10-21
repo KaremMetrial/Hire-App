@@ -2,9 +2,10 @@
 
 namespace App\Http\Resources;
 
+use App\Http\Resources\Vendor\RentalShopResourece;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use App\Http\Resources\Vendor\RentalShopResourece;
 
 class CarResource extends JsonResource
 {
@@ -29,6 +30,26 @@ class CarResource extends JsonResource
             'mileages' => new CarMileageResource($this->whenLoaded('mileages')),
             'availabilities' => CarAvailabilityResource::collection($this->whenLoaded('availabilities')),
             'insurances' => InsuranceResource::collection($this->whenLoaded('insurances')),
+            'is_available' => (bool) $this->isAvailable(Carbon::now()),
+            'delivery_options' => DeliveryOptionResource::collection($this->whenLoaded('deliveryOptions')),
+            'services' => ExtraServiceResource::collection($this->whenLoaded('services')),
+            'customer_types' => $this->whenLoaded('rentalShop', function () {
+                if (! $this->rentalShop) {
+                    return [];
+                }
+
+                $this->rentalShop->loadMissing(['documents', 'customer_types']);
+
+                $documentsByCustomerType = $this->rentalShop->documents->groupBy('pivot.customer_type_id');
+
+                $customerTypes = $this->rentalShop->customer_types->unique('id');
+
+                $customerTypes->each(function ($customerType) use ($documentsByCustomerType) {
+                    $customerType->setRelation('documents', $documentsByCustomerType->get($customerType->id, collect()));
+                });
+
+                return CustomerTypeResource::collection($customerTypes);
+            }),
         ];
     }
 }

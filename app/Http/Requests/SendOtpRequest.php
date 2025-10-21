@@ -24,8 +24,10 @@ class SendOtpRequest extends FormRequest
         return [
             'identifier' => 'required',
             'type' => 'required|in:user,vendor',
+            'purpose' => 'nullable|in:update-vendor-info,pre_registration',
         ];
     }
+
     public function attributes(): array
     {
         return [

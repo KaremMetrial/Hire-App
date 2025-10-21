@@ -19,12 +19,12 @@ enum CarImageTypeEnum: string
     public function label(): string
     {
         return match ($this) {
-            self::FRONT => __('car_image.front'),
-            self::BACK => __('car_image.back'),
-            self::LEFT => __('car_image.left'),
-            self::RIGHT => __('car_image.right'),
-            self::INSIDE => __('car_image.inside'),
-            self::OTHER => __('car_image.other'),
+            self::FRONT => __('enums.car_image.front'),
+            self::BACK => __('enums.car_image.back'),
+            self::LEFT => __('cenums.ar_image.left'),
+            self::RIGHT => __('enums.car_image.right'),
+            self::INSIDE => __('enums.car_image.inside'),
+            self::OTHER => __('enums.car_image.other'),
         };
     }
 }

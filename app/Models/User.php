@@ -6,11 +6,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     /**
      * The attributes that are mass assignable.
@@ -21,6 +22,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'phone',
+        'face_license_id_photo',
+        'back_license_id_photo',
+        'birthday',
     ];
 
     /**
@@ -45,6 +50,7 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
     /*
      * OTP Relationship
      */
@@ -53,4 +59,13 @@ class User extends Authenticatable
         return $this->morphMany(Otp::class, 'otpable');
     }
 
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class);
+    }
+
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(BookingReview::class);
+    }
 }

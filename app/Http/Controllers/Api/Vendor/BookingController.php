@@ -1,0 +1,296 @@
+<?php
+
+namespace App\Http\Controllers\Api\Vendor;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Vendor\CompleteBookingRequest;
+use App\Http\Requests\Vendor\ConfirmBookingRequest;
+use App\Http\Requests\Vendor\RejectBookingRequest;
+use App\Http\Requests\Vendor\StartBookingRequest;
+use App\Http\Resources\BookingResource;
+use App\Services\BookingService;
+use App\Traits\ApiResponse;
+use Exception;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+
+class BookingController extends Controller
+{
+    use ApiResponse;
+
+    public function __construct(private BookingService $bookingService) {}
+
+    /**
+     * Get all bookings for vendor's rental shops
+     */
+    public function index(Request $request): JsonResponse
+    {
+        try {
+            $status = $request->get('status');
+            $perPage = $request->get('per_page', 15);
+
+            $bookings = $this->bookingService->getVendorBookings(
+                auth()->id(),
+                $status,
+                $perPage
+            );
+
+            return $this->successResponse([
+                'bookings' => BookingResource::collection($bookings),
+                'pagination' => [
+                    'current_page' => $bookings->currentPage(),
+                    'last_page' => $bookings->lastPage(),
+                    'per_page' => $bookings->perPage(),
+                    'total' => $bookings->total(),
+                ],
+            ], 'Bookings retrieved successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Get specific booking details
+     */
+    public function show(int $id): JsonResponse
+    {
+        try {
+            $booking = $this->bookingService->getVendorBooking($id, auth()->id());
+
+            return $this->successResponse([
+                'booking' => new BookingResource($booking->load([
+                    'user',
+                    'car.carModel',
+                    'car.images',
+                    'rentalShop',
+                    'payments',
+                    'extraServices',
+                    'insurances',
+                    'documents',
+                    'statusLogs'
+                ])),
+            ], 'Booking retrieved successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage(), 404);
+        }
+    }
+
+    /**
+     * Confirm booking
+     */
+    public function confirm(ConfirmBookingRequest $request, int $id): JsonResponse
+    {
+        try {
+            $booking = $this->bookingService->confirmBooking($id, auth()->id());
+
+            return $this->successResponse([
+                'booking' => new BookingResource($booking),
+            ], 'Booking confirmed successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Reject booking
+     */
+    public function reject(RejectBookingRequest $request, int $id): JsonResponse
+    {
+        try {
+            $booking = $this->bookingService->rejectBooking(
+                $id,
+                $request->get('rejection_reason'),
+                auth()->id()
+            );
+
+            return $this->successResponse([
+                'booking' => new BookingResource($booking),
+            ], 'Booking rejected successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Start booking (car pickup)
+     */
+    public function start(StartBookingRequest $request, int $id): JsonResponse
+    {
+        try {
+            $booking = $this->bookingService->startBooking(
+                $id,
+                $request->get('pickup_mileage')
+            );
+
+            return $this->successResponse([
+                'booking' => new BookingResource($booking),
+            ], 'Booking started successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Complete booking (car return)
+     */
+    public function complete(CompleteBookingRequest $request, int $id): JsonResponse
+    {
+        try {
+            $booking = $this->bookingService->completeBooking(
+                $id,
+                $request->get('return_mileage')
+            );
+
+            return $this->successResponse([
+                'booking' => new BookingResource($booking),
+            ], 'Booking completed successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Get upcoming bookings
+     */
+    public function upcoming(): JsonResponse
+    {
+        try {
+            $bookings = $this->bookingService->getUpcomingBookings(auth()->id(), 7);
+
+            return $this->successResponse([
+                'bookings' => BookingResource::collection($bookings),
+            ], 'Upcoming bookings retrieved successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Get today's bookings
+     */
+    public function today(): JsonResponse
+    {
+        try {
+            $bookings = $this->bookingService->getVendorBookings(
+                auth()->id(),
+                null,
+                50
+            );
+
+            $todayBookings = $bookings->getCollection()->filter(function ($booking) {
+                return now()->parse($booking->pickup_date)->isToday() ||
+                       now()->parse($booking->return_date)->isToday();
+            });
+
+            return $this->successResponse([
+                'bookings' => BookingResource::collection($todayBookings),
+            ], 'Today\'s bookings retrieved successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Get active bookings
+     */
+    public function active(): JsonResponse
+    {
+        try {
+            $bookings = $this->bookingService->getVendorBookings(
+                auth()->id(),
+                'active',
+                50
+            );
+
+            return $this->successResponse([
+                'bookings' => BookingResource::collection($bookings),
+            ], 'Active bookings retrieved successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Get booking statistics for vendor
+     */
+    public function stats(): JsonResponse
+    {
+        try {
+            $stats = $this->bookingService->getBookingStats(auth()->id());
+
+            return $this->successResponse([
+                'stats' => $stats,
+            ], 'Booking statistics retrieved successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Get booking calendar view
+     */
+    public function calendar(Request $request): JsonResponse
+    {
+        try {
+            $startDate = $request->get('start_date', now()->startOfMonth()->toDateString());
+            $endDate = $request->get('end_date', now()->endOfMonth()->toDateString());
+
+            $bookings = $this->bookingService->getVendorBookingsByDateRange(
+                auth()->id(),
+                $startDate,
+                $endDate
+            );
+
+            $calendarData = $bookings->map(function ($booking) {
+                return [
+                    'id' => $booking->id,
+                    'title' => $booking->car->carModel->name,
+                    'start' => $booking->pickup_date,
+                    'end' => $booking->return_date,
+                    'status' => $booking->status,
+                    'customer' => $booking->user->name,
+                    'color' => $this->getBookingColor($booking->status),
+                ];
+            });
+
+            return $this->successResponse([
+                'bookings' => $calendarData,
+            ], 'Calendar data retrieved successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Get booking status logs
+     */
+    public function statusLogs(int $id): JsonResponse
+    {
+        try {
+            $booking = $this->bookingService->getVendorBooking($id, auth()->id());
+            $logs = $booking->statusLogs()->with('changedBy')->orderBy('created_at', 'desc')->get();
+
+            return $this->successResponse([
+                'logs' => $logs,
+            ], 'Status logs retrieved successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Get color for booking status
+     */
+    private function getBookingColor(string $status): string
+    {
+        return match ($status) {
+            'pending' => '#FFA500',
+            'confirmed' => '#008000',
+            'active' => '#0000FF',
+            'completed' => '#808080',
+            'cancelled' => '#FF0000',
+            'rejected' => '#8B0000',
+            default => '#000000',
+        };
+    }
+}

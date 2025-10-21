@@ -2,18 +2,13 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use App\Models\Language;
 
 class LanguageSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Languages Data
         $languages = [
             [
                 'name' => 'English',
@@ -31,8 +26,40 @@ class LanguageSeeder extends Seeder
                 'is_default' => false,
                 'is_active' => true,
             ],
+            [
+                'name' => 'French',
+                'code' => 'fr',
+                'native_name' => 'Français',
+                'direction' => 'ltr',
+                'is_default' => false,
+                'is_active' => false,
+            ],
+            [
+                'name' => 'Spanish',
+                'code' => 'es',
+                'native_name' => 'Español',
+                'direction' => 'ltr',
+                'is_default' => false,
+                'is_active' => false,
+            ],
+            [
+                'name' => 'Chinese',
+                'code' => 'zh',
+                'native_name' => '中文',
+                'direction' => 'ltr',
+                'is_default' => false,
+                'is_active' => false,
+            ],
+            [
+                'name' => 'Urdu',
+                'code' => 'ur',
+                'native_name' => 'اردو',
+                'direction' => 'rtl',
+                'is_default' => false,
+                'is_active' => false,
+            ],
         ];
-        // Insert Languages
+
         foreach ($languages as $language) {
             Language::updateOrCreate($language);
         }

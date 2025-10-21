@@ -6,7 +6,7 @@ use App\Enums\CarPriceDurationTypeEnum;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class CarPrice extends Model
+class   CarPrice extends Model
 {
     protected $fillable = [
         'duration_type',

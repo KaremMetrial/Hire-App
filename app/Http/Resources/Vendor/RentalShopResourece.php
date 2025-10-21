@@ -2,12 +2,8 @@
 
 namespace App\Http\Resources\Vendor;
 
-use App\Enums\RentalShopStatusEnum;
-use App\Models\Vendor;
-use App\Models\Address;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Illuminate\Support\Facades\Storage;
 
 class RentalShopResourece extends JsonResource
 {
@@ -22,7 +18,7 @@ class RentalShopResourece extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'phone' => $this->phone,
-            'image' => $this->image ? asset('storage/'. $this->image) : null,
+            'image' => $this->image ? asset('storage/'.$this->image) : null,
             'is_active' => (bool) $this->is_active,
             'status' => $this->status?->value,
             'status_label' => $this->status?->label(),
@@ -30,7 +26,8 @@ class RentalShopResourece extends JsonResource
             'rejected_reason' => $this->rejected_reason,
             'rating' => (int) $this->rating,
             'count_rating' => (int) $this->count_rating,
-            'address' => new AddressResourece($this->address),
+            'address' => new AddressResourece($this->whenLoaded('address')),
+            'working_days' => WorkingDayResource::collection($this->whenLoaded('workingDays')),
         ];
     }
 }

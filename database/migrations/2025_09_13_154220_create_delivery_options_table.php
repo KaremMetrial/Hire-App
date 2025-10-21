@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('delivery_options', function (Blueprint $table) {
             $table->id();
-            $table->string('type')->default(DeliveryOptionTypeEnum::OFFICE_PICKUP);
+            $table->string('type')->default(DeliveryOptionTypeEnum::OFFICE);
             $table->boolean('is_active')->default(true);
             $table->boolean('is_default')->default(false);
             $table->decimal('price', 10, 2)->nullable();

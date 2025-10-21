@@ -1,9 +1,11 @@
 <?php
 
-    namespace App\Http\Requests\Api;
+    namespace App\Http\Requests\Vendor
+    ;
 
     use App\Enums\CarImageTypeEnum;
     use App\Enums\CarPriceDurationTypeEnum;
+    use App\Enums\DeliveryOptionTypeEnum;
     use Illuminate\Foundation\Http\FormRequest;
     use Illuminate\Validation\Rule;
 
@@ -49,12 +51,10 @@
                 'availabilities' => ['nullable', 'array'],
                 'availabilities.*.is_available' => ['required', 'boolean'],
                 'availabilities.*.unavailable_from' => [
-                    'nullable',
                     'date',
                     'required_if:availabilities.*.is_available,false',
                 ],
                 'availabilities.*.unavailable_to' => [
-                    'nullable',
                     'date',
                     'required_if:availabilities.*.is_available,false',
                     'after:availabilities.*.unavailable_from',
@@ -75,6 +75,13 @@
                 'custom_extra_services.*.name' => ['required_with:custom_extra_services.*.price', 'string'],
                 'custom_extra_services.*.description' => ['nullable', 'string'],
                 'custom_extra_services.*.price' => ['required_with:custom_extra_services.*.name', 'numeric', 'min:0'],
+
+                // Delivery Options
+                'delivery_options' => ['nullable', 'array'],
+                'delivery_options.*.type' => ['required', 'string', Rule::in(DeliveryOptionTypeEnum::values())],
+                'delivery_options.*.price' => ['required', 'numeric', 'min:0'],
+                'delivery_options.*.is_active' => ['required', 'boolean'],
+                'delivery_options.*.is_default' => ['required', 'boolean'],
 
             ];
         }
@@ -128,6 +135,15 @@
                 // Custom Extra Service
                 'custom_extra_services' => __('validation.attributes.custom_extra_services'),
                 'custom_extra_services.*.name' => __('validation.attributes.custom_extra_services_name'),
+                'custom_extra_services.*.description' => __('validation.attributes.custom_extra_services_description'),
+
+                // Delivery Options
+                'delivery_options' => __('validation.attributes.delivery_options'),
+                'delivery_options.*.type' => __('validation.attributes.type'),
+                'delivery_options.*.price' => __('validation.attributes.price'),
+                'delivery_options.*.is_active' => __('validation.attributes.is_active'),
+                'delivery_options.*.is_default' => __('validation.attributes.is_default'),
+
             ];
         }
     }
