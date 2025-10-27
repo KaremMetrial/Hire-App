@@ -12,4 +12,5 @@ interface CarRepositoryInterface
     public function update(array $data, Car $car): Car;
     public function destroy(Car $car): void;
     public function findById(int $id): ?Car;
+    public function getByRentalShop(int $rentalShopId, array $filters = []): LengthAwarePaginator;
 }

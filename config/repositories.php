@@ -18,4 +18,5 @@ return [
     \App\Repositories\Interfaces\DocumentRepositoryInterface::class => \App\Repositories\DocumentRepository::class,
     \App\Repositories\Interfaces\UserRepositoryInterface::class => \App\Repositories\UserRepository::class,
     \App\Repositories\Interfaces\BookingRepositoryInterface::class => \App\Repositories\BookingRepository::class,
+    \App\Repositories\Interfaces\BookingReviewRepositoryInterface::class => \App\Repositories\BookingReviewRepository::class,
 ];

@@ -9,4 +9,6 @@ interface RentalShopRepositryInterface
     public function create($data);
 
     public function update(RentalShop $rentalShop, $data);
+
+    public function findById(int $id): ?RentalShop;
 }

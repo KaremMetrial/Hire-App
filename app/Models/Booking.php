@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\BookingStatusEnum;
+use App\Enums\DeliveryOptionTypeEnum;
 use App\Enums\PaymentStatusEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -66,6 +67,8 @@ class Booking extends Model
         'completed_at' => 'datetime',
         'status' => BookingStatusEnum::class,
         'payment_status' => PaymentStatusEnum::class,
+        'pickup_location_type' => DeliveryOptionTypeEnum::class,
+        'return_location_type' => DeliveryOptionTypeEnum::class,
     ];
 
     // Relations
@@ -143,37 +146,37 @@ class Booking extends Model
     // Helper Methods
     public function isPending(): bool
     {
-        return $this->status === 'pending';
+        return $this->status === BookingStatusEnum::Pending;
     }
 
     public function isConfirmed(): bool
     {
-        return $this->status === 'confirmed';
+        return $this->status === BookingStatusEnum::Confirmed;
     }
 
     public function isActive(): bool
     {
-        return $this->status === 'active';
+        return $this->status === BookingStatusEnum::Active;
     }
 
     public function isCompleted(): bool
     {
-        return $this->status === 'completed';
+        return $this->status === BookingStatusEnum::Completed;
     }
 
     public function isCancelled(): bool
     {
-        return $this->status === 'cancelled';
+        return $this->status === BookingStatusEnum::Cancelled;
     }
 
     public function isRejected(): bool
     {
-        return $this->status === 'rejected';
+        return $this->status === BookingStatusEnum::Rejected;
     }
 
     public function canBeCancelled(): bool
     {
-        return in_array($this->status, ['pending', 'confirmed']);
+        return in_array($this->status, [BookingStatusEnum::Pending, BookingStatusEnum::Confirmed]);
     }
 
     public function getDurationInDays(): int

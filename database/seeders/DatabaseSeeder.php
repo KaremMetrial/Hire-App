@@ -38,6 +38,9 @@ class DatabaseSeeder extends Seeder
             RentalShopSeeder::class,
             CarSeeder::class,
             CarPriceSeeder::class,
+            CarMileageSeeder::class,
+            CarAvailabilitySeeder::class,
+            DeliveryOptionSeeder::class,
 
             // Booking Data
             BookingSeeder::class,

@@ -9,7 +9,10 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\TransmissionController;
 use App\Http\Controllers\Api\User\AuthController;
 use App\Http\Controllers\Api\User\BookingController;
+use App\Http\Controllers\Api\User\BookmarkController;
 use App\Http\Controllers\Api\User\CarController;
+use App\Http\Controllers\Api\User\RentalShopController;
+use App\Http\Controllers\Api\User\ReviewController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -61,15 +64,28 @@ Route::prefix('v1')->group(function () {
         Route::post('/login', 'login')->name('login');
     })->middleware('guest');
 
-    // Car
-    Route::prefix('cars')->controller(CarController::class)->group(function () {
-        Route::get('/', 'index');
-        Route::get('/{car}', 'show');
-    });
-
     // Booking
     Route::prefix('bookings')->controller(BookingController::class)->group(function () {
         Route::post('/calculate-price', 'calculatePrice');
+    });
+
+    // Car (Public Access)
+    Route::prefix('cars')->controller(CarController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::get('/{car}', 'show');
+        Route::get('/rental-shop/{rentalShopId}', 'getByRentalShop');
+    });
+
+    // Rental Shop (Public Access)
+    Route::prefix('rental-shops')->controller(RentalShopController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::get('/{rentalShop}', 'show');
+    });
+
+    // Reviews (Public Access)
+    Route::prefix('reviews')->controller(ReviewController::class)->group(function () {
+        Route::get('/rental-shop/{rentalShopId}', 'getRentalShopReviews');
+        Route::get('/{id}', 'show');
     });
 
     // Authintication Middleware
@@ -77,6 +93,16 @@ Route::prefix('v1')->group(function () {
         // Booking
         Route::prefix('bookings')->controller(BookingController::class)->group(function () {
             Route::post('/', 'store');
+        });
+
+        // Bookmarks
+        Route::prefix('bookmarks')->controller(BookmarkController::class)->group(function () {
+            Route::get('/', 'index');
+            Route::get('/cars', 'cars');
+            Route::post('/toggle/{car}', 'toggle');
+            Route::get('/check/{car}', 'check');
+            Route::delete('/{car}', 'remove');
+            Route::get('/count/{car}', 'count');
         });
     });
 });

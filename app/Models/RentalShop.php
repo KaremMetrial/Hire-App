@@ -100,4 +100,56 @@ class RentalShop extends Model
     {
         return $this->hasMany(BookingReview::class);
     }
+
+    public function approvedReviews(): HasMany
+    {
+        return $this->hasMany(BookingReview::class)->approved();
+    }
+
+    public function allReviews(): HasMany
+    {
+        return $this->hasMany(BookingReview::class);
+    }
+
+    public function getTotalReviewsAttribute(): int
+    {
+        return $this->approvedReviews()->count();
+    }
+
+    public function getAverageRatingAttribute(): float
+    {
+        return $this->approvedReviews()->avg('rating') ?? 0;
+    }
+
+    public function getStarDistributionAttribute(): array
+    {
+        $distribution = $this->approvedReviews()
+            ->selectRaw('rating, COUNT(*) as count')
+            ->groupBy('rating')
+            ->pluck('count', 'rating')
+            ->toArray();
+
+        // Ensure all ratings (1-5) are present with 0 count if missing
+        $stars = [];
+        for ($i = 1; $i <= 5; $i++) {
+            $stars[$i] = $distribution[$i] ?? 0;
+        }
+
+        return $stars;
+    }
+
+    public function getReviewStatsAttribute(): array
+    {
+        return [
+            'total_reviews' => $this->total_reviews,
+            'average_rating' => round($this->average_rating, 1),
+            'star_distribution' => [
+                '5_star' => $this->star_distribution[5] ?? 0,
+                '4_star' => $this->star_distribution[4] ?? 0,
+                '3_star' => $this->star_distribution[3] ?? 0,
+                '2_star' => $this->star_distribution[2] ?? 0,
+                '1_star' => $this->star_distribution[1] ?? 0,
+            ],
+        ];
+    }
 }

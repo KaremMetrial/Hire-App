@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Services\BookingTimerService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -12,10 +13,10 @@ class BookingResource extends JsonResource
         return [
             'id' => $this->id,
             'booking_number' => $this->booking_number,
-            'status' => $this->status,
-            'status_label' => $this->getStatusLabel(),
-            'payment_status' => $this->payment_status,
-            'payment_status_label' => $this->getPaymentStatusLabel(),
+            'status' => $this->status->value,
+            'status_label' => $this->status->label(),
+            'payment_status' => $this->payment_status->value,
+            'payment_status_label' => $this->payment_status->label(),
 
             // User Information
             'user' => $this->when($this->user, [
@@ -67,11 +68,11 @@ class BookingResource extends JsonResource
             'duration_hours' => $this->getDurationInHours(),
             'duration_text' => $this->getDurationText(),
 
-            'pickup_location_type' => $this->pickup_location_type,
-            'pickup_location_label' => $this->getLocationLabel($this->pickup_location_type),
+            'pickup_location_type' => $this->pickup_location_type->value,
+            'pickup_location_label' => $this->pickup_location_type->label(),
             'pickup_address' => $this->pickup_address,
-            'return_location_type' => $this->return_location_type,
-            'return_location_label' => $this->getLocationLabel($this->return_location_type),
+            'return_location_type' => $this->return_location_type->value,
+            'return_location_label' => $this->return_location_type->label(),
             'return_address' => $this->return_address,
 
             // Pricing
@@ -128,7 +129,7 @@ class BookingResource extends JsonResource
                     'id' => $document->id,
                     'document_name' => $document->document->name ?? null,
                     'document_type' => $document->document->type ?? null,
-                    'file_path' => $document->file_path,
+                    'file_path' => $document->file_path ? asset('storage/'.$document->file_path) : null,
                     'document_value' => $document->document_value,
                     'verified' => $document->verified,
                     'verified_at' => $document->verified_at?->format('Y-m-d H:i:s'),
@@ -140,12 +141,12 @@ class BookingResource extends JsonResource
                 return [
                     'id' => $payment->id,
                     'amount' => (float) $payment->amount,
-                    'payment_method' => $payment->payment_method,
-                    'payment_method_label' => $this->getPaymentMethodLabel($payment->payment_method),
-                    'payment_type' => $payment->payment_type,
-                    'payment_type_label' => $this->getPaymentTypeLabel($payment->payment_type),
-                    'status' => $payment->status,
-                    'status_label' => $this->getPaymentStatusLabel($payment->status),
+                    'payment_method' => $payment->payment_method->value,
+                    'payment_method_label' => $payment->payment_method->label(),
+                    'payment_type' => $payment->payment_type->value,
+                    'payment_type_label' => $payment->payment_type->label(),
+                    'status' => $payment->status->value,
+                    'status_label' => $payment->status->label(),
                     'transaction_id' => $payment->transaction_id,
                     'payment_date' => $payment->payment_date?->format('Y-m-d H:i:s'),
                 ];
@@ -155,13 +156,13 @@ class BookingResource extends JsonResource
             'status_logs' => $this->whenLoaded('statusLogs', $this->statusLogs->map(function ($log) {
                 return [
                     'id' => $log->id,
-                    'old_status' => $log->old_status,
-                    'new_status' => $log->new_status,
+                    'old_status' => $log->old_status ? \App\Enums\BookingStatusEnum::tryFrom($log->old_status)?->label() : $log->old_status,
+                    'new_status' => $log->new_status ? \App\Enums\BookingStatusEnum::tryFrom($log->new_status)?->label() : $log->new_status,
                     'changed_by_type' => $log->changed_by_type,
-                    'changed_by' => $log->changedBy ? [
-                        'id' => $log->changedBy->id,
-                        'name' => $log->changedBy->name,
-                    ] : null,
+//                    'changed_by' => $log->changedBy && isset($log->changedBy->id) ? [
+//                        'id' => $log->changedBy->id ?? null,
+//                        'name' => $log->changedBy->name ?? 'Unknown',
+//                    ] : null,
                     'notes' => $log->notes,
                     'created_at' => $log->created_at->format('Y-m-d H:i:s'),
                 ];
@@ -180,6 +181,12 @@ class BookingResource extends JsonResource
             'created_at' => $this->created_at->format('Y-m-d H:i:s'),
             'updated_at' => $this->updated_at->format('Y-m-d H:i:s'),
 
+            // Timer Information (for pending bookings)
+            'acceptance_timer' => $this->when($this->isPending(), function () {
+                $timerService = app(BookingTimerService::class);
+                return $timerService->calculateRemainingAcceptanceTime($this->resource);
+            }),
+
             // Flags and Helpers
             'can_be_cancelled' => $this->canBeCancelled(),
             'is_pending' => $this->isPending(),
@@ -191,76 +198,19 @@ class BookingResource extends JsonResource
         ];
     }
 
-    private function getStatusLabel(): string
-    {
-        return match ($this->status) {
-            'pending' => 'Pending',
-            'confirmed' => 'Confirmed',
-            'active' => 'Active',
-            'completed' => 'Completed',
-            'cancelled' => 'Cancelled',
-            'rejected' => 'Rejected',
-            default => ucfirst($this->status),
-        };
-    }
-
-    private function getPaymentStatusLabel(?string $status = null): string
-    {
-        $status = $status ?? $this->payment_status;
-
-        return match ($status) {
-            'paid' => 'Paid',
-            'unpaid' => 'Unpaid',
-            'partial' => 'Partial',
-            'refunded' => 'Refunded',
-            default => ucfirst($status ?? 'Unknown'),
-        };
-    }
-
-    private function getLocationLabel(string $type): string
-    {
-        return match ($type) {
-            'office' => 'Office Pickup',
-            'custom' => 'Custom Address',
-            default => ucfirst($type),
-        };
-    }
-
-    private function getPaymentMethodLabel(string $method): string
-    {
-        return match ($method) {
-            'online' => 'Online Payment',
-            'cash' => 'Cash',
-            'card' => 'Credit Card',
-            'bank_transfer' => 'Bank Transfer',
-            default => ucfirst($method),
-        };
-    }
-
-    private function getPaymentTypeLabel(string $type): string
-    {
-        return match ($type) {
-            'rental' => 'Rental Fee',
-            'deposit' => 'Security Deposit',
-            'mileage' => 'Mileage Fee',
-            'cancellation' => 'Cancellation Fee',
-            default => ucfirst($type),
-        };
-    }
-
     private function getDurationText(): string
     {
         $days = $this->getDurationInDays();
         $hours = $this->getDurationInHours();
 
         if ($days > 0 && $hours > 0) {
-            return "{$days} day(s) and {$hours} hour(s)";
+            return __('enums.duration.days_and_hours', ['days' => $days, 'hours' => $hours]);
         } elseif ($days > 0) {
-            return "{$days} day(s)";
+            return __('enums.duration.days_only', ['days' => $days]);
         } elseif ($hours > 0) {
-            return "{$hours} hour(s)";
+            return __('enums.duration.hours_only', ['hours' => $hours]);
         }
 
-        return 'Less than 1 hour';
+        return __('enums.duration.less_than_hour');
     }
 }

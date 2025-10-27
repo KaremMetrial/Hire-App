@@ -30,12 +30,12 @@ class LoginRequest extends FormRequest
                 // If it looks like a phone number, validate as a phone.
                 Rule::when($isPhone, [
                     'numeric',
-                    Rule::exists('vendors', 'phone'),
+                    Rule::exists('users', 'phone'),
                 ]),
                 // Otherwise, validate as an email.
                 Rule::when(! $isPhone, [
                     'email',
-                    Rule::exists('vendors', 'email'),
+                    Rule::exists('users', 'email'),
                 ]),
             ],
             'password' => ['required', 'string', 'min:8'],

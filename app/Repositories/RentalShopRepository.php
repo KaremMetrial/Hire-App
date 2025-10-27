@@ -18,4 +18,9 @@ class RentalShopRepository implements RentalShopRepositryInterface
 
         return $rentalShop;
     }
+
+    public function findById(int $id): ?RentalShop
+    {
+        return RentalShop::find($id);
+    }
 }

@@ -8,7 +8,9 @@ use App\Http\Requests\Vendor\ConfirmBookingRequest;
 use App\Http\Requests\Vendor\RejectBookingRequest;
 use App\Http\Requests\Vendor\StartBookingRequest;
 use App\Http\Resources\BookingResource;
+use App\Http\Resources\PaginationResource;
 use App\Services\BookingService;
+use App\Services\BookingTimerService;
 use App\Traits\ApiResponse;
 use Exception;
 use Illuminate\Http\JsonResponse;
@@ -18,7 +20,10 @@ class BookingController extends Controller
 {
     use ApiResponse;
 
-    public function __construct(private BookingService $bookingService) {}
+    public function __construct(
+        private BookingService $bookingService,
+        private BookingTimerService $bookingTimerService
+    ) {}
 
     /**
      * Get all bookings for vendor's rental shops
@@ -26,23 +31,15 @@ class BookingController extends Controller
     public function index(Request $request): JsonResponse
     {
         try {
-            $status = $request->get('status');
-            $perPage = $request->get('per_page', 15);
-
             $bookings = $this->bookingService->getVendorBookings(
                 auth()->id(),
-                $status,
-                $perPage
+                $request->get('status'),
+                $request->get('per_page', 15)
             );
 
             return $this->successResponse([
                 'bookings' => BookingResource::collection($bookings),
-                'pagination' => [
-                    'current_page' => $bookings->currentPage(),
-                    'last_page' => $bookings->lastPage(),
-                    'per_page' => $bookings->perPage(),
-                    'total' => $bookings->total(),
-                ],
+                'pagination' => new PaginationResource($bookings),
             ], 'Bookings retrieved successfully');
         } catch (Exception $e) {
             return $this->errorResponse($e->getMessage());
@@ -273,6 +270,27 @@ class BookingController extends Controller
             return $this->successResponse([
                 'logs' => $logs,
             ], 'Status logs retrieved successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Get remaining acceptance time for a booking
+     */
+    public function getRemainingAcceptanceTime(int $id): JsonResponse
+    {
+        try {
+            $booking = $this->bookingService->getVendorBooking($id, auth()->id());
+
+            // Calculate remaining acceptance time considering working hours
+            $remainingTime = $this->bookingTimerService->calculateRemainingAcceptanceTime($booking);
+
+            return $this->successResponse([
+                'booking_id' => $booking->id,
+                'booking_status' => $booking->status,
+                'remaining_acceptance_time' => $remainingTime,
+            ], 'Remaining acceptance time retrieved successfully');
         } catch (Exception $e) {
             return $this->errorResponse($e->getMessage());
         }

@@ -44,7 +44,7 @@ class BookingRepository implements BookingRepositoryInterface
         $extraServicesTotal = $this->calculateExtraServicesTotal($car, $data['extra_services'] ?? [], $rentalDays);
         $insuranceTotal = $this->calculateInsuranceTotal($car, $data['insurance_id'] ?? null, $rentalDays);
 
-        $taxRate = 0.10;
+        $taxRate = config('booking.tax_rate', 0.10);
         $tax = ($rentalPrice + $extraServicesTotal + $insuranceTotal) * $taxRate;
 
         $subtotal = $rentalPrice + $deliveryFee + $extraServicesTotal + $insuranceTotal;
@@ -159,13 +159,13 @@ class BookingRepository implements BookingRepositoryInterface
     public function getProblematicBookings(): Collection
     {
         return Booking::where(function ($query) {
-                $query->where('status', BookingStatusEnum::Pending->value)
-                    ->where('created_at', '<', now()->subDays(3))
-                    ->orWhere('status', BookingStatusEnum::Active->value)
-                    ->where('return_date', '<', now()->subDay())
-                    ->orWhere('payment_status', 'unpaid')
-                    ->where('created_at', '<', now()->subHours(2));
-            })
+            $query->where('status', BookingStatusEnum::Pending->value)
+                ->where('created_at', '<', now()->subDays(3))
+                ->orWhere('status', BookingStatusEnum::Active->value)
+                ->where('return_date', '<', now()->subDay())
+                ->orWhere('payment_status', 'unpaid')
+                ->where('created_at', '<', now()->subHours(2));
+        })
             ->with(['user', 'car.carModel', 'rentalShop.vendor'])
             ->orderBy('created_at', 'desc')
             ->get();
@@ -275,9 +275,9 @@ class BookingRepository implements BookingRepositoryInterface
     public function getCarUtilizationReport(string $startDate, string $endDate): array
     {
         $cars = Car::with(['bookings' => function ($query) use ($startDate, $endDate) {
-                $query->whereBetween('pickup_date', [$startDate, $endDate])
-                    ->whereIn('status', [BookingStatusEnum::Confirmed->value, BookingStatusEnum::Active->value, BookingStatusEnum::Completed->value]);
-            }])
+            $query->whereBetween('pickup_date', [$startDate, $endDate])
+                ->whereIn('status', [BookingStatusEnum::Confirmed->value, BookingStatusEnum::Active->value, BookingStatusEnum::Completed->value]);
+        }])
             ->get();
 
         $utilizationData = $cars->map(function ($car) use ($startDate, $endDate) {
@@ -500,8 +500,8 @@ class BookingRepository implements BookingRepositoryInterface
                 ->where('extra_service_id', $service['id'])
                 ->first();
 
-            if ($carExtraService) {
-                $total += $carExtraService->price * $service['quantity'] * $days;
+            if ($carExtraService && $carExtraService->pivot) {
+                $total += $carExtraService->pivot->price * $service['quantity'] * $days;
             }
         }
 
@@ -519,6 +519,36 @@ class BookingRepository implements BookingRepositoryInterface
         }
 
         return 0.00;
+    }
+
+    /**
+     * Calculate cancellation fee based on configuration
+     */
+    public function calculateCancellationFee($booking): float
+    {
+        $hoursUntilPickup = now()->diffInHours($booking->pickup_date);
+        $fees = config('booking.cancellation_fees');
+
+        if ($hoursUntilPickup < 24) {
+            return $booking->total_price * $fees['less_than_24_hours'];
+        } elseif ($hoursUntilPickup < 72) {
+            return $booking->total_price * $fees['less_than_72_hours'];
+        }
+
+        return $booking->total_price * $fees['default'];
+    }
+
+    /**
+     * Calculate mileage fee based on configuration
+     */
+    public function calculateMileageFee($car, int $actualMileage): float
+    {
+        $mileageConfig = config('booking.mileage');
+        $includedMileage = $car->mileages->daily_mileage_limit ?? $mileageConfig['daily_limit'];
+        $extraMileage = max(0, $actualMileage - $includedMileage);
+        $mileageRate = $car->mileages->extra_mileage_rate ?? $mileageConfig['extra_rate'];
+
+        return $extraMileage * $mileageRate;
     }
 
     private function calculateRentalPriceFromId(int $priceId, int $days, int $hours): float
@@ -589,28 +619,79 @@ class BookingRepository implements BookingRepositoryInterface
 
     public function createBooking(array $data, int $userId): Booking
     {
-        // Validate that the price_id belongs to the selected car
-        if (isset($data['price_id'])) {
-            $carPrice = CarPrice::where('id', $data['price_id'])
-                ->where('car_id', $data['car_id'])
-                ->where('is_active', true)
-                ->firstOrFail();
-        }
+        return DB::transaction(function () use ($data, $userId) {
+            // Use reservation service if token is provided
+            if (isset($data['reservation_token'])) {
+                try {
+                    $reservationService = app(\App\Services\BookingReservationService::class);
+                    $booking = $reservationService->confirmReservation($data['reservation_token'], $data);
+                } catch (\Exception $e) {
+                    // Fallback to original method if reservation fails
+                    $priceDetails = $this->calculatePrice($data);
+                    $car = Car::with(['services', 'insurances'])->findOrFail($data['car_id']);
+                    $booking = $this->createBookingRecord($data, $userId, $car, $priceDetails);
+                    $this->createBookingRelations($booking, $car, $data, $priceDetails);
+                    $this->logBookingCreation($booking, $userId);
+                }
+            } else {
+                // Fallback to original method (not recommended for production)
+                $priceDetails = $this->calculatePrice($data);
+                $car = Car::with(['services', 'insurances'])->findOrFail($data['car_id']);
+                $booking = $this->createBookingRecord($data, $userId, $car, $priceDetails);
+                $this->createBookingRelations($booking, $car, $data, $priceDetails);
+                $this->logBookingCreation($booking, $userId);
+            }
 
-        $priceDetails = $this->calculatePrice($data);
-        $car = Car::findOrFail($data['car_id']);
-        $data['booking_number'] = 'BK'.strtoupper(Str::random(8)).time();
-        $data['user_id'] = $userId;
-        $data['rental_shop_id'] = $car->rental_shop_id;
-        $data['rental_price'] = $priceDetails['rental_price'];
-        $data['delivery_fee'] = $priceDetails['delivery_fee'];
-        $data['extra_services_total'] = $priceDetails['extra_services_total'];
-        $data['insurance_total'] = $priceDetails['insurance_total'];
-        $data['tax'] = $priceDetails['tax_amount'];
-        $data['total_price'] = $priceDetails['total_price'];
+            return $booking->load(['extraServices', 'insurances', 'payments', 'documents']);
+        });
+    }
 
-        $booking = Booking::create($data);
-        dd($booking);
+
+    /**
+     * Create the main booking record
+     */
+    private function createBookingRecord(array $data, int $userId, Car $car, array $priceDetails): Booking
+    {
+        $bookingData = [
+            'booking_number' => 'BK' . strtoupper(Str::random(8)) . time(),
+            'user_id' => $userId,
+            'car_id' => $data['car_id'],
+            'rental_shop_id' => $car->rental_shop_id,
+            'pickup_date' => $data['pickup_date'],
+            'return_date' => $data['return_date'],
+            'pickup_location_type' => $data['pickup_location_type'],
+            'return_location_type' => $data['return_location_type'],
+            'pickup_address' => $data['pickup_address'] ?? null,
+            'return_address' => $data['return_address'] ?? null,
+            'rental_price' => $priceDetails['rental_price'],
+            'delivery_fee' => $priceDetails['delivery_fee'],
+            'extra_services_total' => $priceDetails['extra_services_total'],
+            'insurance_total' => $priceDetails['insurance_total'],
+            'tax' => $priceDetails['tax_amount'],
+            'total_price' => $priceDetails['total_price'],
+            'status' => BookingStatusEnum::Pending->value,
+            'payment_status' => 'unpaid',
+            'customer_notes' => $data['customer_notes'] ?? null,
+        ];
+        return Booking::create($bookingData);
+    }
+
+    /**
+     * Create all related records for the booking
+     */
+    private function createBookingRelations(Booking $booking, Car $car, array $data, array $priceDetails): void
+    {
+        $this->createBookingPayment($booking, $priceDetails);
+        $this->createBookingExtraServices($booking, $car, $data['extra_services'] ?? []);
+        $this->createBookingInsurance($booking, $car, $data['insurance_id'] ?? null, $priceDetails);
+        $this->createBookingDocuments($booking, $data['documents'] ?? []);
+    }
+
+    /**
+     * Create booking payment record
+     */
+    private function createBookingPayment(Booking $booking, array $priceDetails): void
+    {
         BookingPayment::create([
             'booking_id' => $booking->id,
             'payment_method' => 'online',
@@ -618,70 +699,86 @@ class BookingRepository implements BookingRepositoryInterface
             'payment_type' => 'rental',
             'status' => 'pending',
         ]);
+    }
 
-        if (!empty($data['extra_services'])) {
-            foreach ($data['extra_services'] as $service) {
-                $carExtraService = $car->services()
-                    ->where('extra_service_id', $service['id'])
-                    ->first();
+    /**
+     * Create extra services records for the booking
+     */
+    private function createBookingExtraServices(Booking $booking, Car $car, array $extraServices): void
+    {
+        foreach ($extraServices as $service) {
+            $carExtraService = $car->services()
+                ->where('extra_service_id', $service['id'])
+                ->first();
 
-                if ($carExtraService) {
-                    BookingExtraService::create([
-                        'booking_id' => $booking->id,
-                        'extra_service_id' => $service['id'],
-                        'price' => $carExtraService->price,
-                        'quantity' => $service['quantity'],
-                    ]);
-                }
-            }
+            BookingExtraService::create([
+                'booking_id' => $booking->id,
+                'extra_service_id' => $service['id'],
+                'price' => $carExtraService->pivot->price,
+                'quantity' => $service['quantity'],
+            ]);
+        }
+    }
+
+    /**
+     * Create insurance record for the booking
+     */
+    private function createBookingInsurance(Booking $booking, Car $car, ?int $insuranceId, array $priceDetails): void
+    {
+        if (!$insuranceId) {
+            return;
         }
 
-        if (!empty($data['insurance_id'])) {
-            $insurance = $car->insurances()->where('insurances.id', $data['insurance_id'])->first();
+        $insurance = $car->insurances()->where('insurances.id', $insuranceId)->first();
+        $insuranceDays = $priceDetails['rental_days'];
+        $insurancePrice = $insurance->price * $insuranceDays;
 
-            if ($insurance) {
-                $insuranceDays = $priceDetails['rental_days'];
-                $insurancePrice = $insurance->price * $insuranceDays;
+        BookingInsurance::create([
+            'booking_id' => $booking->id,
+            'insurance_id' => $insuranceId,
+            'price' => $insurancePrice,
+            'deposit_price' => $insurance->deposit_price,
+        ]);
+    }
 
-                BookingInsurance::create([
-                    'booking_id' => $booking->id,
-                    'insurance_id' => $data['insurance_id'],
-                    'price' => $insurancePrice,
-                    'deposit_price' => $insurance->deposit_price,
-                ]);
+    /**
+     * Create document records for the booking
+     */
+    private function createBookingDocuments(Booking $booking, array $documents): void
+    {
+        foreach ($documents as $documentData) {
+            $filePath = null;
+            $documentValue = null;
+
+            if (isset($documentData['file'])) {
+                $filePath = $documentData['file']->store('booking-documents', 'public');
+            } elseif (isset($documentData['value'])) {
+                $documentValue = $documentData['value'];
             }
+
+            BookingDocument::create([
+                'booking_id' => $booking->id,
+                'document_id' => $documentData['document_id'],
+                'file_path' => $filePath,
+                'document_value' => $documentValue,
+                'verified' => false,
+            ]);
         }
+    }
 
-        if (!empty($data['documents'])) {
-            foreach ($data['documents'] as $documentData) {
-                $filePath = null;
-                $documentValue = null;
-
-                if (isset($documentData['file'])) {
-                    $filePath = $documentData['file']->store('booking-documents', 'public');
-                } elseif (isset($documentData['value'])) {
-                    $documentValue = $documentData['value'];
-                }
-
-                BookingDocument::create([
-                    'booking_id' => $booking->id,
-                    'document_id' => $documentData['document_id'],
-                    'file_path' => $filePath,
-                    'document_value' => $documentValue,
-                    'verified' => false,
-                ]);
-            }
-        }
-
+    /**
+     * Log the booking creation
+     */
+    private function logBookingCreation(Booking $booking, int $userId): void
+    {
         BookingStatusLog::create([
             'booking_id' => $booking->id,
-            'new_status' => 'pending',
+            'old_status' => null,
+            'new_status' => BookingStatusEnum::Pending->value,
             'changed_by_type' => 'user',
             'changed_by_id' => $userId,
             'notes' => 'Booking created',
         ]);
-
-        return $booking;
     }
 
     private function getVendorRentalShopIds(int $vendorId): array
@@ -690,6 +787,26 @@ class BookingRepository implements BookingRepositoryInterface
             ->where('vendor_id', $vendorId)
             ->pluck('rental_shop_id')
             ->toArray();
+    }
+
+    /**
+     * Check if car is available for given dates
+     */
+    public function isCarAvailable(int $carId, string $pickupDate, string $returnDate): bool
+    {
+        $conflictingBookings = Booking::where('car_id', $carId)
+            ->whereIn('status', [BookingStatusEnum::Confirmed->value, BookingStatusEnum::Active->value])
+            ->where(function ($query) use ($pickupDate, $returnDate) {
+                $query->whereBetween('pickup_date', [$pickupDate, $returnDate])
+                    ->orWhereBetween('return_date', [$pickupDate, $returnDate])
+                    ->orWhere(function ($q) use ($pickupDate, $returnDate) {
+                        $q->where('pickup_date', '<=', $pickupDate)
+                            ->where('return_date', '>=', $returnDate);
+                    });
+            })
+            ->exists();
+
+        return !$conflictingBookings;
     }
 
     private function generateCsvContent($bookings): string

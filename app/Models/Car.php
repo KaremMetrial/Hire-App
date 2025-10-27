@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\DeliveryOptionTypeEnum;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -131,6 +132,16 @@ class Car extends Model
         return $this->hasMany(BookingReview::class);
     }
 
+    public function approvedReviews(): HasMany
+    {
+        return $this->hasMany(BookingReview::class)->where('is_approved', true);
+    }
+
+    public function getAverageRatingAttribute()
+    {
+        return $this->approvedReviews()->avg('rating') ?? 0;
+    }
+
     public function isAvailableForPeriod($pickupDate, $returnDate): bool
     {
         return ! $this->bookings()
@@ -143,6 +154,48 @@ class Car extends Model
                             ->where('return_date', '>=', $returnDate);
                     });
             })
+            ->exists();
+    }
+
+    public function bookmarks(): HasMany
+    {
+        return $this->hasMany(Bookmark::class);
+    }
+
+    public function bookmarkedByUsers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'bookmarks');
+    }
+
+    /**
+     * Check if car is bookmarked by a specific user
+     */
+    public function isBookmarkedBy(int $userId): bool
+    {
+        // Check if bookmarks relationship is already loaded
+        if ($this->relationLoaded('bookmarks')) {
+            return $this->bookmarks->contains('user_id', $userId);
+        }
+
+        return $this->bookmarks()->where('user_id', $userId)->exists();
+    }
+
+    /**
+     * Get bookmark count for this car
+     */
+    public function getBookmarkCountAttribute(): int
+    {
+        return $this->bookmarks()->count();
+    }
+
+    /**
+     * Check if car can be delivered to user location
+     */
+    public function canBeDelivered(): bool
+    {
+        return $this->deliveryOptions()
+            ->where('is_active', true)
+            ->where('type', DeliveryOptionTypeEnum::CUSTOM)
             ->exists();
     }
 }

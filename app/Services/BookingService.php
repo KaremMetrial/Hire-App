@@ -18,8 +18,14 @@ class BookingService
 {
     public function __construct(
         protected BookingRepositoryInterface $bookingRepository,
-        protected CarRepositoryInterface $carRepository
-    ) {}
+        protected CarRepositoryInterface $carRepository,
+        protected MileageValidationService $mileageValidationService,
+        protected AutoReviewService $autoReviewService
+    ) {
+        // Auto-inject services if not provided (for backward compatibility)
+        $this->mileageValidationService ??= app(MileageValidationService::class);
+        $this->autoReviewService ??= app(AutoReviewService::class);
+    }
 
     /**
      * Calculate booking price with all components
@@ -34,12 +40,6 @@ class BookingService
      */
     public function createBooking(array $data, int $userId): Booking
     {
-        // Check car availability
-        $car = $this->carRepository->findById($data['car_id']);
-        if (!$this->isCarAvailable($car->id, $data['pickup_date'], $data['return_date'])) {
-            throw new Exception('Car is not available for the selected dates');
-        }
-
         return $this->bookingRepository->createBooking($data, $userId);
     }
 
@@ -100,6 +100,20 @@ class BookingService
             throw new Exception('Cannot start booking before pickup date');
         }
 
+        // Validate pickup mileage if service is available
+        if ($this->mileageValidationService) {
+            $mileageValidation = $this->mileageValidationService->validatePickupMileage($booking->car_id, $pickupMileage);
+
+            if (!$mileageValidation['valid']) {
+                throw new Exception('Invalid pickup mileage: ' . implode(', ', $mileageValidation['errors']));
+            }
+
+            // Log warnings if any
+            if (!empty($mileageValidation['warnings'])) {
+                \Log::warning('Mileage warnings for booking ' . $bookingId, $mileageValidation['warnings']);
+            }
+        }
+
         $booking->update([
             'status' => BookingStatusEnum::Active->value,
             'pickup_mileage' => $pickupMileage,
@@ -121,8 +135,26 @@ class BookingService
             throw new Exception('Only active bookings can be completed');
         }
 
-        $actualMileage = $returnMileage - $booking->pickup_mileage;
-        $mileageFee = $this->calculateMileageFee($booking->car, $actualMileage);
+        // Validate return mileage and calculate fee if service is available
+        if ($this->mileageValidationService) {
+            $mileageResult = $this->mileageValidationService->calculateMileageFeeWithValidation($bookingId, $returnMileage);
+
+            if (!$mileageResult['valid']) {
+                throw new Exception('Invalid return mileage: ' . implode(', ', $mileageResult['errors']));
+            }
+
+            // Log warnings if any
+            if (!empty($mileageResult['warnings'])) {
+                \Log::warning('Mileage warnings for booking completion ' . $bookingId, $mileageResult['warnings']);
+            }
+
+            $mileageFee = $mileageResult['fee'];
+            $actualMileage = $mileageResult['actual_mileage'];
+        } else {
+            // Fallback to original logic
+            $actualMileage = $returnMileage - $booking->pickup_mileage;
+            $mileageFee = $this->calculateMileageFee($booking->car, $actualMileage);
+        }
 
         $booking->update([
             'status' => BookingStatusEnum::Completed->value,
@@ -136,7 +168,12 @@ class BookingService
         $newTotal = $booking->calculateTotalPrice() + $mileageFee;
         $booking->update(['total_price' => $newTotal]);
 
-        $this->logStatusChange($booking, BookingStatusEnum::Completed->value, 'vendor', $booking->car->rentalShop->vendors->first()->id, "Booking completed with return mileage: {$returnMileage}");
+        $this->logStatusChange($booking, BookingStatusEnum::Completed->value, 'vendor', $booking->car->rentalShop->vendors->first()->id, "Booking completed with return mileage: {$returnMileage}, mileage fee: {$mileageFee}");
+
+        // Trigger review creation if service is available
+        if ($this->autoReviewService) {
+            $this->autoReviewService->createReviewForCompletedBooking($booking);
+        }
 
         return $booking->fresh();
     }
@@ -273,25 +310,7 @@ class BookingService
         ];
     }
 
-    /**
-     * Check if car is available for given dates
-     */
-    private function isCarAvailable(int $carId, string $pickupDate, string $returnDate): bool
-    {
-        $conflictingBookings = Booking::where('car_id', $carId)
-            ->whereIn('status', [BookingStatusEnum::Confirmed->value, BookingStatusEnum::Active->value])
-            ->where(function ($query) use ($pickupDate, $returnDate) {
-                $query->whereBetween('pickup_date', [$pickupDate, $returnDate])
-                    ->orWhereBetween('return_date', [$pickupDate, $returnDate])
-                    ->orWhere(function ($q) use ($pickupDate, $returnDate) {
-                        $q->where('pickup_date', '<=', $pickupDate)
-                            ->where('return_date', '>=', $returnDate);
-                    });
-            })
-            ->exists();
 
-        return !$conflictingBookings;
-    }
 
     /**
      * Get booking for vendor with authorization check
@@ -322,11 +341,7 @@ class BookingService
      */
     private function calculateMileageFee($car, int $actualMileage): float
     {
-        $includedMileage = $car->mileages->daily_mileage_limit ?? 200;
-        $extraMileage = max(0, $actualMileage - $includedMileage);
-        $mileageRate = $car->mileages->extra_mileage_rate ?? 0.50;
-
-        return $extraMileage * $mileageRate;
+        return $this->bookingRepository->calculateMileageFee($car, $actualMileage);
     }
 
     /**
@@ -334,15 +349,7 @@ class BookingService
      */
     private function calculateCancellationFee(Booking $booking): float
     {
-        $hoursUntilPickup = now()->diffInHours($booking->pickup_date);
-
-        if ($hoursUntilPickup < 24) {
-            return $booking->total_price * 0.50; // 50% for less than 24 hours
-        } elseif ($hoursUntilPickup < 72) {
-            return $booking->total_price * 0.25; // 25% for less than 72 hours
-        }
-
-        return 0; // No fee for 72+ hours
+        return $this->bookingRepository->calculateCancellationFee($booking);
     }
 
     /**

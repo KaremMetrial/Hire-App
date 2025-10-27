@@ -29,4 +29,11 @@ class BookingStatusLog extends Model
     {
         return $this->morphTo('changed_by', 'changed_by_type', 'changed_by_id');
     }
+
+    public function scopeWithChangedBy($query)
+    {
+        return $query->with(['changedBy' => function ($q) {
+            $q->select('id', 'name');
+        }]);
+    }
 }

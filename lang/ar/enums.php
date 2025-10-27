@@ -36,4 +36,30 @@ return [
         'text' => 'نص',
         'file' => 'ملف',
     ],
+    'booking_status' => [
+        'pending' => 'قيد الانتظار',
+        'confirmed' => 'مؤكد',
+        'active' => 'نشط',
+        'completed' => 'مكتمل',
+        'cancelled' => 'ملغي',
+        'rejected' => 'مرفوض',
+    ],
+    'payment_status' => [
+        'unpaid' => 'غير مدفوع',
+        'partially_paid' => 'مدفوع جزئياً',
+        'paid' => 'مدفوع',
+        'refunded' => 'مسترد',
+    ],
+    'duration' => [
+        'days_and_hours' => ':days يوم(أيام) و :hours ساعة(ساعات)',
+        'days_only' => ':days يوم(أيام)',
+        'hours_only' => ':hours ساعة(ساعات)',
+        'less_than_hour' => 'أقل من ساعة',
+    ],
+    'payment_method' => [
+        'cash' => 'نقدي',
+        'card' => 'بطاقة',
+        'bank_transfer' => 'تحويل بنكي',
+        'online' => 'أونلاين',
+    ],
 ];

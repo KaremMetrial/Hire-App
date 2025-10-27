@@ -11,6 +11,12 @@ interface BookingRepositoryInterface
 
     public function createBooking(array $data, int $userId);
 
+    public function isCarAvailable(int $carId, string $pickupDate, string $returnDate): bool;
+
+    public function calculateCancellationFee($booking): float;
+
+    public function calculateMileageFee($car, int $actualMileage): float;
+
     public function findById(int $id);
 
     public function findUserBooking(int $bookingId, int $userId);

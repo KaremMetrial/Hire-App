@@ -31,4 +31,9 @@ class CarService
     {
         $this->carRepository->destroy($car);
     }
+
+    public function getByRentalShop(int $rentalShopId, array $filters = []): LengthAwarePaginator
+    {
+        return $this->carRepository->getByRentalShop($rentalShopId, $filters);
+    }
 }

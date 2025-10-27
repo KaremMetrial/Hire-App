@@ -5,6 +5,7 @@ namespace App\Repositories;
 use App\Models\Car;
 use App\Repositories\Interfaces\CarRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -14,7 +15,7 @@ class CarRepository implements CarRepositoryInterface
 
     public function all(): LengthAwarePaginator
     {
-        $query = Car::with(
+        $query = Car::with([
             'carModel',
             'fuel',
             'transmission',
@@ -27,7 +28,7 @@ class CarRepository implements CarRepositoryInterface
             'availabilities',
             'insurances',
             'deliveryOptions'
-        )
+        ])
             ->whereIsActive(true);
 
         if (request()->filled('city_id')) {
@@ -248,5 +249,127 @@ class CarRepository implements CarRepositoryInterface
             'deliveryOptions',
             'services'
         ])->find($id);
+    }
+
+    public function getByRentalShop(int $rentalShopId, array $filters = []): LengthAwarePaginator
+    {
+        $query = Car::with($this->getCarRelations())
+            ->where('rental_shop_id', $rentalShopId)
+            ->whereIsActive(true);
+        $this->applyCarFilters($query, $filters);
+        $this->applyCarSorting($query, $filters);
+
+        return $query->paginate($filters['per_page'] ?? self::PAGINATION_LIMIT);
+    }
+
+    /**
+     * Get standard car relationships for optimal loading
+     */
+    private function getCarRelations(): array
+    {
+        return [
+            'carModel',
+            'fuel',
+            'transmission',
+            'category',
+            'rentalShop',
+            'city',
+            'images',
+            'prices',
+            'mileages',
+            'availabilities',
+            'insurances',
+            'deliveryOptions'
+        ];
+    }
+
+    /**
+     * Apply filters to car query
+     */
+    private function applyCarFilters(Builder $query, array $filters): void
+    {
+        foreach ($this->getCarFilters() as $filter) {
+            $value = $filters[$filter] ?? null;
+
+            if ($value !== null && $value !== '') {
+                match ($filter) {
+                    'model_id' => $query->where('model_id', $value),
+                    'color' => $query->where('color', $value),
+                    'year_from' => $query->where('year_of_manufacture', '>=', $value),
+                    'year_to' => $query->where('year_of_manufacture', '<=', $value),
+                    'fuel_id' => $query->where('fuel_id', $value),
+                    'transmission_id' => $query->where('transmission_id', $value),
+                    'category_id' => $query->where('category_id', $value),
+                    default => null
+                };
+            }
+        }
+
+        // Handle price range filter
+        $this->applyPriceFilter($query, $filters);
+    }
+
+    /**
+     * Apply price range filter
+     */
+    private function applyPriceFilter(Builder $query, array $filters): void
+    {
+        $minPrice = $filters['min_price'] ?? null;
+        $maxPrice = $filters['max_price'] ?? null;
+
+        if ($minPrice !== null || $maxPrice !== null) {
+            $query->whereHas('prices', function ($q) use ($minPrice, $maxPrice) {
+                if ($minPrice !== null) {
+                    $q->where('price', '>=', $minPrice);
+                }
+                if ($maxPrice !== null) {
+                    $q->where('price', '<=', $maxPrice);
+                }
+            });
+        }
+    }
+
+    /**
+     * Apply sorting to car query
+     */
+    private function applyCarSorting(Builder $query, array $filters): void
+    {
+        $sortBy = $filters['sort_by'] ?? 'created_at';
+        $sortOrder = $filters['sort_order'] ?? 'desc';
+
+        $sortMapping = [
+            'newest' => ['created_at', 'desc'],
+            'latest' => ['created_at', 'desc'],
+            'oldest' => ['created_at', 'asc'],
+            'highest_price' => ['price', 'desc'],
+            'price_desc' => ['price', 'desc'],
+            'lowest_price' => ['price', 'asc'],
+            'price_asc' => ['price', 'asc'],
+        ];
+
+        if (isset($sortMapping[$sortBy])) {
+            [$field, $direction] = $sortMapping[$sortBy];
+            $query->orderBy($field, $direction);
+        } elseif (in_array($sortBy, ['rating', 'created_at', 'updated_at'])) {
+            $query->orderBy($sortBy, $sortOrder);
+        } else {
+            $query->latest();
+        }
+    }
+
+    /**
+     * Get available car filters
+     */
+    private function getCarFilters(): array
+    {
+        return [
+            'model_id',
+            'color',
+            'year_from',
+            'year_to',
+            'fuel_id',
+            'transmission_id',
+            'category_id'
+        ];
     }
 }

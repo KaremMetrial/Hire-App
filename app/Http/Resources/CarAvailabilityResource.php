@@ -12,8 +12,8 @@ class CarAvailabilityResource extends JsonResource
         return [
             'id' => $this->id,
             'is_available' => (bool) $this->is_available,
-            'unavailable_from' => $this->unavailable_from?->format('Y-m-d'),
-            'unavailable_to' => $this->unavailable_to?->format('Y-m-d'),
+            'unavailable_from' => $this->unavailable_from,
+            'unavailable_to' => $this->unavailable_to,
             'reason' => $this->reason,
         ];
     }

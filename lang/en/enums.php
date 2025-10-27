@@ -36,4 +36,30 @@ return [
         'text' => 'Text',
         'file' => 'File',
     ],
+    'booking_status' => [
+        'pending' => 'Pending',
+        'confirmed' => 'Confirmed',
+        'active' => 'Active',
+        'completed' => 'Completed',
+        'cancelled' => 'Cancelled',
+        'rejected' => 'Rejected',
+    ],
+    'payment_status' => [
+        'unpaid' => 'Unpaid',
+        'partially_paid' => 'Partially Paid',
+        'paid' => 'Paid',
+        'refunded' => 'Refunded',
+    ],
+    'duration' => [
+        'days_and_hours' => ':days day(s) and :hours hour(s)',
+        'days_only' => ':days day(s)',
+        'hours_only' => ':hours hour(s)',
+        'less_than_hour' => 'Less than 1 hour',
+    ],
+    'payment_method' => [
+        'cash' => 'Cash',
+        'card' => 'Card',
+        'bank_transfer' => 'Bank Transfer',
+        'online' => 'Online',
+    ],
 ];

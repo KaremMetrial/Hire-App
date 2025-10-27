@@ -47,9 +47,8 @@ class BookingController extends Controller
                 auth()->id()
             );
             DB::commit();
-
             return $this->successResponse([
-                'booking' => new BookingResource($booking->load(['car', 'rentalShop', 'payments'])),
+                'booking' => new BookingResource($booking->load(['car', 'rentalShop', 'payments', 'extraServices', 'insurances', 'documents'])),
                 'booking_number' => $booking->booking_number,
             ], 'Booking created successfully');
         } catch (\Exception $e) {

@@ -82,6 +82,94 @@ class CreateBookingRequest extends FormRequest
                     $validator->errors()->add('price_id', 'The selected price is not valid for this car.');
                 }
             }
+
+            // Create reservation to check availability and lock the car
+            if ($this->car_id && $this->pickup_date && $this->return_date) {
+                try {
+                    $reservationService = app(\App\Services\BookingReservationService::class);
+                    $reservationToken = $reservationService->createReservation(
+                        $this->car_id,
+                        $this->pickup_date,
+                        $this->return_date,
+                        auth()->id()
+                    );
+                    // Store token in request for later use
+                    $this->merge(['reservation_token' => $reservationToken]);
+                } catch (\Exception $e) {
+                    // Fallback to original availability check if reservation service fails
+                    if (!$this->isCarAvailable($this->car_id, $this->pickup_date, $this->return_date)) {
+                        $validator->errors()->add('car_id', 'Car is not available for the selected dates');
+                    }
+                }
+            }
+
+            // Validate extra services availability and pricing
+            if ($this->car_id && !empty($this->extra_services)) {
+                $this->validateExtraServices($validator);
+            }
+
+            // Validate insurance availability
+            if ($this->car_id && $this->insurance_id) {
+                $this->validateInsurance($validator);
+            }
         });
+    }
+
+    /**
+     * Check if car is available for given dates
+     */
+    private function isCarAvailable(int $carId, string $pickupDate, string $returnDate): bool
+    {
+        $conflictingBookings = \App\Models\Booking::where('car_id', $carId)
+            ->whereIn('status', [\App\Enums\BookingStatusEnum::Confirmed->value, \App\Enums\BookingStatusEnum::Active->value])
+            ->where(function ($query) use ($pickupDate, $returnDate) {
+                $query->whereBetween('pickup_date', [$pickupDate, $returnDate])
+                    ->orWhereBetween('return_date', [$pickupDate, $returnDate])
+                    ->orWhere(function ($q) use ($pickupDate, $returnDate) {
+                        $q->where('pickup_date', '<=', $pickupDate)
+                            ->where('return_date', '>=', $returnDate);
+                    });
+            })
+            ->exists();
+
+        return !$conflictingBookings;
+    }
+
+    /**
+     * Validate extra services availability and pricing
+     */
+    private function validateExtraServices($validator): void
+    {
+        $car = \App\Models\Car::with(['services'])->findOrFail($this->car_id);
+
+        foreach ($this->extra_services as $index => $service) {
+            $carExtraService = $car->services()
+                ->where('extra_service_id', $service['id'])
+                ->first();
+
+            if (!$carExtraService) {
+                $validator->errors()->add("extra_services.{$index}.id", "Extra service with ID {$service['id']} is not available for this car");
+                continue;
+            }
+
+            if (is_null($carExtraService->pivot->price)) {
+                $validator->errors()->add("extra_services.{$index}.id", "Extra service with ID {$service['id']} has no price configured");
+            }
+        }
+    }
+
+    /**
+     * Validate insurance availability
+     */
+    private function validateInsurance($validator): void
+    {
+        $car = \App\Models\Car::with(['insurances'])->findOrFail($this->car_id);
+        $carInsurance = $car->insurances()
+            ->where('insurances.id', $this->insurance_id)
+            ->first();
+
+        if (!$carInsurance) {
+            $validator->errors()->add('insurance_id', "Insurance with ID {$this->insurance_id} is not available for this car");
+        }
     }
 }
