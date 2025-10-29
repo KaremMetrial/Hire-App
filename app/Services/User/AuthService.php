@@ -3,6 +3,7 @@
 namespace App\Services\User;
 
 use App\Repositories\Interfaces\UserRepositoryInterface;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 class AuthService
@@ -37,5 +38,18 @@ class AuthService
         }
 
         return $user;
+    }
+
+    public function updateProfile($user, array $data)
+    {
+        DB::beginTransaction();
+        try {
+            $updatedUser = $this->userRepository->update($user, $data);
+            DB::commit();
+            return $updatedUser;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
     }
 }

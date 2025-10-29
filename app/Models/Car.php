@@ -99,6 +99,11 @@ class Car extends Model
         return $this->hasMany(DeliveryOption::class);
     }
 
+    public function rules(): HasMany
+    {
+        return $this->hasMany(CarRule::class);
+    }
+
     public function services(): BelongsToMany
     {
         return $this->belongsToMany(ExtraService::class)

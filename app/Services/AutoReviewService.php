@@ -340,4 +340,16 @@ class AutoReviewService
 
         return $distribution;
     }
+
+    /**
+     * Get reviews for a specific rental shop
+     */
+    public function getRentalShopReviews(int $rentalShopId, int $perPage = 15): \Illuminate\Contracts\Pagination\LengthAwarePaginator
+    {
+        return \App\Models\BookingReview::with(['user', 'car', 'booking'])
+            ->where('rental_shop_id', $rentalShopId)
+            ->where('is_approved', true)
+            ->orderBy('created_at', 'desc')
+            ->paginate($perPage);
+    }
 }

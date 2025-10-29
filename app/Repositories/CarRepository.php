@@ -13,56 +13,16 @@ class CarRepository implements CarRepositoryInterface
 {
     const PAGINATION_LIMIT = 15;
 
-    public function all(): LengthAwarePaginator
+    public function all(array $filters = []): LengthAwarePaginator
     {
-        $query = Car::with([
-            'carModel',
-            'fuel',
-            'transmission',
-            'category',
-            'rentalShop',
-            'city',
-            'images',
-            'prices',
-            'mileages',
-            'availabilities',
-            'insurances',
-            'deliveryOptions'
-        ])
+        $query = Car::with($this->getCarRelations())
             ->whereIsActive(true);
 
-        if (request()->filled('city_id')) {
-            $query->where('city_id', request('city_id'));
-        }
+        // Apply filters & sorting via dedicated helpers for clarity and reuse
+        $this->applyCarFilters($query, $filters);
+        $this->applyCarSorting($query, $filters);
 
-        if (request()->filled('model_id')) {
-            $query->where('model_id', request('model_id'));
-        }
-
-        if (request()->filled('color')) {
-            $query->where('color', request('color'));
-        }
-
-        if (request()->filled('year_from')) {
-            $query->where('year_of_manufacture', '>=', request('year_from'));
-        }
-
-        if (request()->filled('year_to')) {
-            $query->where('year_of_manufacture', '<=', request('year_to'));
-        }
-
-        if (request()->filled('min_price') || request()->filled('max_price')) {
-            $query->whereHas('prices', function ($q) {
-                if (request()->filled('min_price')) {
-                    $q->where('price', '>=', request('min_price'));
-                }
-                if (request()->filled('max_price')) {
-                    $q->where('price', '<=', request('max_price'));
-                }
-            });
-        }
-
-        return $query->latest()->paginate(self::PAGINATION_LIMIT);
+        return $query->paginate($filters['per_page'] ?? self::PAGINATION_LIMIT);
     }
 
     public function store(array $data): Car
@@ -239,7 +199,8 @@ class CarRepository implements CarRepositoryInterface
             'fuel',
             'transmission',
             'category',
-            'rentalShop',
+            'rentalShop.address',
+            'rentalShop.workingDays',
             'city',
             'images',
             'prices',
@@ -268,18 +229,19 @@ class CarRepository implements CarRepositoryInterface
     private function getCarRelations(): array
     {
         return [
-            'carModel',
-            'fuel',
-            'transmission',
-            'category',
+            'carModel.translations',
+            'fuel.translations',
+            'transmission.translations',
+            'category.translations',
             'rentalShop',
-            'city',
+            'city.translations',
             'images',
             'prices',
             'mileages',
             'availabilities',
-            'insurances',
-            'deliveryOptions'
+            'insurances.translations',
+            'deliveryOptions',
+            'rules'
         ];
     }
 
@@ -305,6 +267,30 @@ class CarRepository implements CarRepositoryInterface
             }
         }
 
+        // Additional filters not covered by the simple mapping
+        if (!empty($filters['city_id'])) {
+            $query->where('city_id', $filters['city_id']);
+        }
+
+        if (!empty($filters['rental_shop_id'])) {
+            $query->where('rental_shop_id', $filters['rental_shop_id']);
+        }
+
+        if (!empty($filters['extra_services_id'])) {
+            $ids = (array) $filters['extra_services_id'];
+            $query->whereHas('services', function ($q) use ($ids) {
+                $q->whereIn('extra_service_id', $ids);
+            });
+        }
+
+        if (!empty($filters['rental_type'])) {
+            $type = $filters['rental_type'];
+            $query->whereHas('prices', function ($q) use ($type) {
+                $q->where('duration_type', $type)
+                    ->where('is_active', true);
+            });
+        }
+
         // Handle price range filter
         $this->applyPriceFilter($query, $filters);
     }
@@ -318,12 +304,14 @@ class CarRepository implements CarRepositoryInterface
         $maxPrice = $filters['max_price'] ?? null;
 
         if ($minPrice !== null || $maxPrice !== null) {
-            $query->whereHas('prices', function ($q) use ($minPrice, $maxPrice) {
+            $now = now();
+            $query->whereHas('prices', function ($q) use ($minPrice, $maxPrice, $now) {
+                $expr = "CASE WHEN discounted_price IS NOT NULL AND (discount_start_at IS NULL OR discount_start_at <= ?) AND (discount_end_at IS NULL OR discount_end_at >= ?) THEN discounted_price ELSE price END";
                 if ($minPrice !== null) {
-                    $q->where('price', '>=', $minPrice);
+                    $q->whereRaw("($expr) >= ?", [$now, $now, $minPrice]);
                 }
                 if ($maxPrice !== null) {
-                    $q->where('price', '<=', $maxPrice);
+                    $q->whereRaw("($expr) <= ?", [$now, $now, $maxPrice]);
                 }
             });
         }

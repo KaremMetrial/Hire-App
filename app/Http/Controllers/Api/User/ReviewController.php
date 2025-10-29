@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\User;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\User\SubmitReviewRequest;
+use App\Http\Resources\PaginationResource;
 use App\Services\AutoReviewService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
@@ -80,6 +81,26 @@ class ReviewController extends Controller
             return $this->successResponse([
                 'statistics' => $stats,
             ], 'Review statistics retrieved successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Get reviews for a specific rental shop
+     *
+     * @param int $rentalShopId
+     * @return JsonResponse
+     */
+    public function getRentalShopReviews(int $rentalShopId): JsonResponse
+    {
+        try {
+            $reviews = $this->autoReviewService->getRentalShopReviews($rentalShopId, request('per_page', 15));
+
+            return $this->successResponse([
+                'reviews' => $reviews->items(),
+                'pagination' => new PaginationResource($reviews),
+            ], 'Rental shop reviews retrieved successfully');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
         }

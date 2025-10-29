@@ -95,7 +95,22 @@ class BookmarkController extends Controller
     {
         $user = Auth::user();
         $cars = $user->bookmarkedCars()
-            ->with(['carModel.brand', 'category', 'fuel', 'transmission', 'images'])
+            ->with([
+                'carModel',
+                'fuel',
+                'transmission',
+                'category',
+                'rentalShop.address',
+                'rentalShop.workingDays',
+                'city',
+                'images',
+                'prices',
+                'mileages',
+                'availabilities',
+                'insurances',
+                'deliveryOptions',
+                'services'
+            ])
             ->active()
             ->latest()
             ->paginate($request->get('per_page', 15));

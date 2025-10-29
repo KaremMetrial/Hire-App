@@ -139,12 +139,12 @@ Route::prefix('v1')->group(function () {
         // Booking
         Route::prefix('bookings')->controller(BookingController::class)->group(function () {
             Route::get('/', 'index');
-            //                Route::get('/upcoming', 'upcoming');
-            //                Route::get('/{id}', 'show');
-            //                Route::post('/{id}/confirm', 'confirm');
-            //                Route::post('/{id}/reject', 'reject');
-            //                Route::post('/{id}/start', 'start');
-            //                Route::post('/{id}/complete', 'complete');
+            Route::get('/{id}', 'show');
+            Route::post('/{id}/confirm', 'confirm');
+            Route::post('/{id}/reject', 'reject');
+            Route::post('/{id}/request-info', 'requestInfo');
+            Route::post('/{id}/start', 'start');
+            Route::post('/{id}/complete', 'complete');
         });
     });
 });

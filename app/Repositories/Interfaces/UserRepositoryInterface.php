@@ -10,5 +10,5 @@ interface UserRepositoryInterface
 
     public function findBy(string $field, string $value);
 
-    public function update(User $vendor, array $data);
+    public function update(User $user, array $data);
 }

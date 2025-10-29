@@ -71,9 +71,13 @@ class BookingResource extends JsonResource
             'pickup_location_type' => $this->pickup_location_type->value,
             'pickup_location_label' => $this->pickup_location_type->label(),
             'pickup_address' => $this->pickup_address,
+            'pickup_latitude' => (float) $this->pickup_latitude,
+            'pickup_longitude' => (float) $this->pickup_longitude,
             'return_location_type' => $this->return_location_type->value,
             'return_location_label' => $this->return_location_type->label(),
             'return_address' => $this->return_address,
+            'return_latitude' => (float) $this->return_latitude,
+            'return_longitude' => (float) $this->return_longitude,
 
             // Pricing
             'pricing' => [
@@ -187,6 +191,21 @@ class BookingResource extends JsonResource
                 return $timerService->calculateRemainingAcceptanceTime($this->resource);
             }),
 
+            // Information Requests
+            'information_requests' => $this->whenLoaded('informationRequests', $this->informationRequests->map(function ($request) {
+                return [
+                    'id' => $request->id,
+                    'requested_field' => $request->requested_field,
+                    'field_label' => $request->getFieldLabel(),
+                    'is_required' => $request->is_required,
+                    'status' => $request->status,
+                    'notes' => $request->notes,
+                    'submitted_value' => $request->submitted_value,
+                    'submitted_at' => $request->submitted_at?->format('Y-m-d H:i:s'),
+                    'created_at' => $request->created_at->format('Y-m-d H:i:s'),
+                ];
+            })),
+
             // Flags and Helpers
             'can_be_cancelled' => $this->canBeCancelled(),
             'is_pending' => $this->isPending(),
@@ -195,6 +214,7 @@ class BookingResource extends JsonResource
             'is_completed' => $this->isCompleted(),
             'is_cancelled' => $this->isCancelled(),
             'is_rejected' => $this->isRejected(),
+            'is_info_requested' => $this->isInfoRequested(),
         ];
     }
 

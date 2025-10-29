@@ -27,7 +27,7 @@ class RentalShopResourece extends JsonResource
             'rating' => (int) $this->rating,
             'count_rating' => (int) $this->count_rating,
             'address' => new AddressResourece($this->whenLoaded('address')),
-            'working_days' => WorkingDayResource::collection($this->whenLoaded('workingDays')),
+            'working_days' => WorkingDayResource::collection($this->workingDays),
         ];
     }
 }

@@ -38,11 +38,12 @@ return [
     ],
     'booking_status' => [
         'pending' => 'قيد الانتظار',
-        'confirmed' => 'مؤكد',
+        'confirmed' => 'انتظار الاستلام',
         'active' => 'نشط',
         'completed' => 'مكتمل',
         'cancelled' => 'ملغي',
         'rejected' => 'مرفوض',
+        'info_requested' => 'طلب معلومات',
     ],
     'payment_status' => [
         'unpaid' => 'غير مدفوع',
@@ -61,5 +62,15 @@ return [
         'card' => 'بطاقة',
         'bank_transfer' => 'تحويل بنكي',
         'online' => 'أونلاين',
+    ],
+    'information_request_fields' => [
+        'license_number' => 'رقم الرخصة',
+        'license_expiry_date' => 'تاريخ انتهاء الرخصة',
+        'face_license_id_photo' => 'صورة الرخصة (الوجه)',
+        'back_license_id_photo' => 'صورة الرخصة (الخلف)',
+        'nationality' => 'الجنسية',
+        'emergency_contact_name' => 'اسم جهة الاتصال في حالات الطوارئ',
+        'emergency_contact_phone' => 'رقم هاتف جهة الاتصال في حالات الطوارئ',
+        'driving_experience_years' => 'سنوات الخبرة في القيادة',
     ],
 ];

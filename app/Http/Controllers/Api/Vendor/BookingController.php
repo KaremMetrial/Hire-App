@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Vendor\CompleteBookingRequest;
 use App\Http\Requests\Vendor\ConfirmBookingRequest;
 use App\Http\Requests\Vendor\RejectBookingRequest;
+use App\Http\Requests\Vendor\RequestInfoRequest;
 use App\Http\Requests\Vendor\StartBookingRequest;
 use App\Http\Resources\BookingResource;
 use App\Http\Resources\PaginationResource;
@@ -64,7 +65,8 @@ class BookingController extends Controller
                     'extraServices',
                     'insurances',
                     'documents',
-                    'statusLogs'
+                    'statusLogs',
+                    'informationRequests'
                 ])),
             ], 'Booking retrieved successfully');
         } catch (Exception $e) {
@@ -270,6 +272,26 @@ class BookingController extends Controller
             return $this->successResponse([
                 'logs' => $logs,
             ], 'Status logs retrieved successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Request additional information from user
+     */
+    public function requestInfo(RequestInfoRequest $request, int $id): JsonResponse
+    {
+        try {
+            $booking = $this->bookingService->requestBookingInfo(
+                $id,
+                auth()->id(),
+                $request->get('information_requests')
+            );
+
+            return $this->successResponse([
+                'booking' => new BookingResource($booking->load('informationRequests')),
+            ], 'Information request sent successfully');
         } catch (Exception $e) {
             return $this->errorResponse($e->getMessage());
         }

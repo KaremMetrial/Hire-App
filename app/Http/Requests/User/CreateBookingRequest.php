@@ -41,7 +41,11 @@ class CreateBookingRequest extends FormRequest
             'pickup_location_type' => ['required', 'string', Rule::in(DeliveryOptionTypeEnum::values())],
             'return_location_type' => ['required', 'string', Rule::in(DeliveryOptionTypeEnum::values())],
             'pickup_address' => ['required_if:pickup_location_type,custom', 'string', 'max:255'],
+            'pickup_latitude' => ['required_if:pickup_location_type,custom', 'numeric', 'between:-90,90'],
+            'pickup_longitude' => ['required_if:pickup_location_type,custom', 'numeric', 'between:-180,180'],
             'return_address' => ['required_if:return_location_type,custom', 'string', 'max:255'],
+            'return_latitude' => ['required_if:return_location_type,custom', 'numeric', 'between:-90,90'],
+            'return_longitude' => ['required_if:return_location_type,custom', 'numeric', 'between:-180,180'],
             'extra_services' => ['sometimes', 'array'],
             'extra_services.*.id' => ['required', 'exists:extra_services,id'],
             'extra_services.*.quantity' => ['required', 'integer', 'min:1', 'max:100'],
@@ -71,6 +75,21 @@ class CreateBookingRequest extends FormRequest
                 }
             }
 
+            // Check if user already has an active booking for this car
+            if ($this->car_id) {
+                $existingBooking = \App\Models\Booking::where('user_id', auth()->id())
+                    ->where('car_id', $this->car_id)
+                    ->whereIn('status', [
+                        \App\Enums\BookingStatusEnum::Pending->value,
+                        \App\Enums\BookingStatusEnum::Confirmed->value,
+                        \App\Enums\BookingStatusEnum::Active->value
+                    ])
+                    ->exists();
+
+                if ($existingBooking) {
+                    $validator->errors()->add('car_id', 'You already have an active booking for this car. You cannot make multiple bookings for the same car.');
+                }
+            }
             // Validate that price_id belongs to the selected car
             if ($this->price_id && $this->car_id) {
                 $priceExists = \App\Models\CarPrice::where('id', $this->price_id)
@@ -87,18 +106,49 @@ class CreateBookingRequest extends FormRequest
             if ($this->car_id && $this->pickup_date && $this->return_date) {
                 try {
                     $reservationService = app(\App\Services\BookingReservationService::class);
+
+                    // Debug log
+                    \Log::info('Attempting to create reservation', [
+                        'car_id' => $this->car_id,
+                        'pickup_date' => $this->pickup_date,
+                        'return_date' => $this->return_date,
+                        'user_id' => auth()->id()
+                    ]);
+
                     $reservationToken = $reservationService->createReservation(
                         $this->car_id,
                         $this->pickup_date,
                         $this->return_date,
                         auth()->id()
                     );
+
+                    // Debug log
+                    \Log::info('Reservation created successfully', [
+                        'token' => $reservationToken
+                    ]);
+
                     // Store token in request for later use
                     $this->merge(['reservation_token' => $reservationToken]);
                 } catch (\Exception $e) {
+                    // Log the actual error
+                    \Log::error('Reservation service error: ' . $e->getMessage(), [
+                        'exception' => $e,
+                        'car_id' => $this->car_id,
+                        'pickup_date' => $this->pickup_date,
+                        'return_date' => $this->return_date,
+                        'user_id' => auth()->id()
+                    ]);
+
                     // Fallback to original availability check if reservation service fails
                     if (!$this->isCarAvailable($this->car_id, $this->pickup_date, $this->return_date)) {
                         $validator->errors()->add('car_id', 'Car is not available for the selected dates');
+                    } else {
+                        // If car is available but reservation service failed, log a warning
+                        \Log::warning('Reservation service failed but car is available', [
+                            'car_id' => $this->car_id,
+                            'pickup_date' => $this->pickup_date,
+                            'return_date' => $this->return_date
+                        ]);
                     }
                 }
             }

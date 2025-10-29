@@ -10,6 +10,7 @@ enum BookingStatusEnum: string
     case Completed = 'completed';
     case Cancelled = 'cancelled';
     case Rejected = 'rejected';
+    case InfoRequested = 'info_requested';
 
     public static function values(): array
     {
@@ -25,6 +26,7 @@ enum BookingStatusEnum: string
             self::Completed => __('enums.booking_status.completed'),
             self::Cancelled => __('enums.booking_status.cancelled'),
             self::Rejected => __('enums.booking_status.rejected'),
+            self::InfoRequested => __('enums.booking_status.info_requested'),
         };
     }
 }

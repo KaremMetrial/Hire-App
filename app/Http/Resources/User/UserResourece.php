@@ -26,6 +26,9 @@ class UserResourece extends JsonResource
                 'storage/'.$this->back_license_id_photo
             ) : null,
             'birthday' => $this->birthday,
+            'avatar' => $this->avatar ? asset(
+                'storage/'.$this->avatar
+            ) : null,
         ];
     }
 }

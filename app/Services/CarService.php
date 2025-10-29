@@ -10,9 +10,9 @@ class CarService
 {
     public function __construct(protected CarRepositoryInterface $carRepository) {}
 
-    public function getAll(): LengthAwarePaginator
+    public function getAll(array $filters = []): LengthAwarePaginator
     {
-        return $this->carRepository->all();
+        return $this->carRepository->all($filters);
     }
 
     public function store(array $data): Car

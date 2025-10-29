@@ -17,8 +17,9 @@ class UserRepository implements UserRepositoryInterface
         return User::where($field, $value)->first();
     }
 
-    public function update(User $vendor, array $data)
+    public function update(User $user, array $data)
     {
-        return $vendor->update($data);
+        $user->update($data);
+        return $user;
     }
 }

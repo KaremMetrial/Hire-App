@@ -23,7 +23,7 @@ interface BookingRepositoryInterface
 
     public function findVendorBooking(int $bookingId, int $vendorId);
 
-    public function getUserBookings(int $userId, ?string $status = null, ?int $perPage = 15): LengthAwarePaginator;
+    public function getUserBookings(int $userId, ?array $statuses = null, ?int $perPage = 15): LengthAwarePaginator;
 
     public function getVendorBookings(int $vendorId, ?string $status = null, ?int $perPage = 15): LengthAwarePaginator;
 
@@ -54,4 +54,12 @@ interface BookingRepositoryInterface
     public function bulkUpdateBookingStatus(array $bookingIds, string $status, ?string $reason = null, string $changedByType = 'admin', int $changedById = null): array;
 
     public function exportBookings(array $filters, string $format): string;
+
+    /**
+     * Get booking statistics for a user
+     *
+     * @param int $userId
+     * @return array
+     */
+    public function getUserBookingStats(int $userId): array;
 }

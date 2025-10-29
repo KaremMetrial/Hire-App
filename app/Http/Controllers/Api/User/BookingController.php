@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\User\BookingCalcPriceRequest;
 use App\Http\Requests\User\CreateBookingRequest;
 use App\Http\Requests\User\CancelBookingRequest;
+use App\Http\Requests\User\ReportPickupIssueRequest;
+use App\Http\Requests\User\SubmitBookingInfoRequest;
 use App\Http\Resources\BookingResource;
+use App\Http\Resources\PaginationResource;
 use App\Services\BookingService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
@@ -17,7 +20,9 @@ class BookingController extends Controller
 {
     use ApiResponse;
 
-    public function __construct(private BookingService $bookingService) {}
+    public function __construct(private BookingService $bookingService)
+    {
+    }
 
     /**
      * Calculate booking price
@@ -63,28 +68,26 @@ class BookingController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
-        try {
-            $status = $request->get('status');
-            $perPage = $request->get('per_page', 15);
+        $status = $request->get('status');
+        $type = $request->get('type'); // 'current' or 'completed'
 
-            $bookings = $this->bookingService->getUserBookings(
-                auth()->id(),
-                $status,
-                $perPage
-            );
-
-            return $this->successResponse([
-                'bookings' => BookingResource::collection($bookings),
-                'pagination' => [
-                    'current_page' => $bookings->currentPage(),
-                    'last_page' => $bookings->lastPage(),
-                    'per_page' => $bookings->perPage(),
-                    'total' => $bookings->total(),
-                ],
-            ], 'Bookings retrieved successfully');
-        } catch (\Exception $e) {
-            return $this->errorResponse($e->getMessage());
+        $statuses = null;
+        if ($type === 'current') {
+            $statuses = ['pending', 'confirmed', 'active', 'info_requested'];
+        } elseif ($type === 'completed') {
+            $statuses = ['completed', 'cancelled', 'rejected'];
+        } elseif ($status) {
+            $statuses = [$status];
         }
+
+        $bookings = $this->bookingService->getUserBookings(
+            auth()->id(),
+            $statuses,
+        );
+        return $this->successResponse([
+            'bookings' => BookingResource::collection($bookings),
+            'pagination' => new PaginationResource($bookings),
+        ], 'message.success');
     }
 
     /**
@@ -103,7 +106,8 @@ class BookingController extends Controller
                     'payments',
                     'extraServices',
                     'insurances',
-                    'documents'
+                    'documents',
+                    'informationRequests'
                 ])),
             ], 'Booking retrieved successfully');
         } catch (\Exception $e) {
@@ -153,6 +157,7 @@ class BookingController extends Controller
                     'completed' => BookingResource::collection($groupedBookings->get('completed', collect())),
                     'cancelled' => BookingResource::collection($groupedBookings->get('cancelled', collect())),
                     'rejected' => BookingResource::collection($groupedBookings->get('rejected', collect())),
+                    'info_requested' => BookingResource::collection($groupedBookings->get('info_requested', collect())),
                 ],
                 'pagination' => [
                     'current_page' => $bookings->currentPage(),
@@ -197,6 +202,59 @@ class BookingController extends Controller
             return $this->successResponse([
                 'stats' => $stats,
             ], 'Booking statistics retrieved successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Submit additional information for booking
+     */
+    public function submitInfo(SubmitBookingInfoRequest $request, int $id): JsonResponse
+    {
+        try {
+            $booking = $this->bookingService->submitBookingInfo(
+                $id,
+                auth()->id(),
+                $request->validated()
+            );
+
+            return $this->successResponse([
+                'booking' => new BookingResource($booking->load(['car', 'rentalShop', 'payments', 'extraServices', 'insurances', 'documents', 'informationRequests'])),
+            ], 'Information submitted successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Report pickup issue
+     */
+    public function reportPickupIssue(ReportPickupIssueRequest $request, int $id): JsonResponse
+    {
+        try {
+            $booking = $this->bookingService->getUserBooking($id, auth()->id());
+
+            // Check if booking is in confirmed status (waiting for pickup)
+            if ($booking->status !== 'confirmed') {
+                return $this->errorResponse('You can only report pickup issues for confirmed bookings', 400);
+            }
+
+            $imagePath = null;
+            if ($request->hasFile('image')) {
+                $imagePath = $request->file('image')->store('pickup-issues', 'public');
+            }
+
+            $issue = \App\Models\BookingPickupIssue::create([
+                'booking_id' => $booking->id,
+                'user_id' => auth()->id(),
+                'problem_details' => $request->get('problem_details'),
+                'image_path' => $imagePath,
+            ]);
+
+            return $this->successResponse([
+                'issue' => $issue,
+            ], 'Pickup issue reported successfully');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
         }

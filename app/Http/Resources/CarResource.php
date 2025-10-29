@@ -41,6 +41,7 @@ class CarResource extends JsonResource
             'can_be_delivered' => (bool) $this->canBeDelivered(),
             'delivery_options' => DeliveryOptionResource::collection($this->whenLoaded('deliveryOptions')),
             'services' => ExtraServiceResource::collection($this->whenLoaded('services')),
+                        'rules' => CarRuleResource::collection($this->whenLoaded('rules')),
 
             // Bookmark information
             'is_bookmarked' => $this->when($user, function () use ($user) {

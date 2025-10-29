@@ -25,8 +25,12 @@ class Booking extends Model
         'return_date',
         'pickup_location_type',
         'pickup_address',
+        'pickup_latitude',
+        'pickup_longitude',
         'return_location_type',
         'return_address',
+        'return_latitude',
+        'return_longitude',
         'rental_price',
         'delivery_fee',
         'extra_services_total',
@@ -53,6 +57,10 @@ class Booking extends Model
     protected $casts = [
         'pickup_date' => 'datetime',
         'return_date' => 'datetime',
+        'pickup_latitude' => 'decimal:8',
+        'pickup_longitude' => 'decimal:8',
+        'return_latitude' => 'decimal:8',
+        'return_longitude' => 'decimal:8',
         'rental_price' => 'decimal:2',
         'delivery_fee' => 'decimal:2',
         'extra_services_total' => 'decimal:2',
@@ -117,6 +125,16 @@ class Booking extends Model
         return $this->hasOne(BookingReview::class);
     }
 
+    public function informationRequests(): HasMany
+    {
+        return $this->hasMany(BookingInformationRequest::class);
+    }
+
+    public function pickupIssues(): HasMany
+    {
+        return $this->hasMany(BookingPickupIssue::class);
+    }
+
     // Scopes
     public function scopePending($query)
     {
@@ -141,6 +159,11 @@ class Booking extends Model
     public function scopeCancelled($query)
     {
         return $query->where('status', 'cancelled');
+    }
+
+    public function scopeInfoRequested($query)
+    {
+        return $query->where('status', 'info_requested');
     }
 
     // Helper Methods
@@ -172,6 +195,11 @@ class Booking extends Model
     public function isRejected(): bool
     {
         return $this->status === BookingStatusEnum::Rejected;
+    }
+
+    public function isInfoRequested(): bool
+    {
+        return $this->status === BookingStatusEnum::InfoRequested;
     }
 
     public function canBeCancelled(): bool

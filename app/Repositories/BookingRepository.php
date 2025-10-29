@@ -88,13 +88,13 @@ class BookingRepository implements BookingRepositoryInterface
             ->first();
     }
 
-    public function getUserBookings(int $userId, ?string $status = null, ?int $perPage = 15): LengthAwarePaginator
+    public function getUserBookings(int $userId, ?array $statuses = null, ?int $perPage = 15): LengthAwarePaginator
     {
         $query = Booking::where('user_id', $userId)
             ->with(['car.carModel', 'car.images', 'rentalShop']);
 
-        if ($status) {
-            $query->where('status', $status);
+        if ($statuses) {
+            $query->whereIn('status', $statuses);
         }
 
         return $query->orderBy('created_at', 'desc')->paginate($perPage);
@@ -138,7 +138,7 @@ class BookingRepository implements BookingRepositoryInterface
         $rentalShopIds = $this->getVendorRentalShopIds($vendorId);
 
         return Booking::whereIn('rental_shop_id', $rentalShopIds)
-            ->whereIn('status', [BookingStatusEnum::Confirmed->value, BookingStatusEnum::Pending->value])
+            ->whereIn('status', [BookingStatusEnum::Confirmed->value, BookingStatusEnum::Pending->value, BookingStatusEnum::InfoRequested->value])
             ->whereBetween('pickup_date', [now(), now()->addDays($days)])
             ->with(['user', 'car.carModel'])
             ->orderBy('pickup_date')
@@ -818,5 +818,79 @@ class BookingRepository implements BookingRepositoryInterface
         }
 
         return $csv;
+    }
+
+    /**
+     * Get booking statistics for a user
+     *
+     * @param int $userId
+     * @return array
+     */
+    public function getUserBookingStats(int $userId): array
+    {
+        $stats = [
+            'total_bookings' => 0,
+            'upcoming_bookings' => 0,
+            'completed_bookings' => 0,
+            'cancelled_bookings' => 0,
+            'total_spent' => 0,
+            'favorite_car' => null,
+            'favorite_rental_shop' => null,
+        ];
+
+        // Get all user bookings with relationships
+        $bookings = Booking::with(['car.carModel', 'rentalShop'])
+            ->where('user_id', $userId)
+            ->get();
+
+        if ($bookings->isEmpty()) {
+            return $stats;
+        }
+
+        $stats['total_bookings'] = $bookings->count();
+        $stats['upcoming_bookings'] = $bookings->whereIn('status', [
+            BookingStatusEnum::Pending->value,
+            BookingStatusEnum::Confirmed->value,
+            BookingStatusEnum::Active->value
+        ])->count();
+
+        $stats['completed_bookings'] = $bookings->where('status', BookingStatusEnum::Completed->value)->count();
+        $stats['cancelled_bookings'] = $bookings->where('status', BookingStatusEnum::Cancelled->value)->count();
+        $stats['total_spent'] = $bookings->where('status', '!=', BookingStatusEnum::Cancelled->value)->sum('total_price');
+
+        // Get favorite car
+        $favoriteCar = $bookings->groupBy('car_id')
+            ->map->count()
+            ->sortDesc()
+            ->keys()
+            ->first();
+
+        if ($favoriteCar) {
+            $car = $bookings->firstWhere('car_id', $favoriteCar);
+            $stats['favorite_car'] = [
+                'id' => $favoriteCar,
+                'name' => $car->car->carModel->name ?? 'Unknown',
+                'model' => $car->car->carModel->model ?? 'Unknown',
+                'brand' => $car->car->carModel->brand->name ?? 'Unknown'
+            ];
+        }
+
+        // Get favorite rental shop
+        $favoriteShop = $bookings->groupBy('rental_shop_id')
+            ->map->count()
+            ->sortDesc()
+            ->keys()
+            ->first();
+
+        if ($favoriteShop) {
+            $shop = $bookings->firstWhere('rental_shop_id', $favoriteShop);
+            $stats['favorite_rental_shop'] = [
+                'id' => $favoriteShop,
+                'name' => $shop->rentalShop->name ?? 'Unknown',
+                'city' => $shop->rentalShop->city ?? 'Unknown'
+            ];
+        }
+
+        return $stats;
     }
 }

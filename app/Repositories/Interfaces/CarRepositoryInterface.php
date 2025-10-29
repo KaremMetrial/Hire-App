@@ -7,7 +7,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface CarRepositoryInterface
 {
-    public function all(): LengthAwarePaginator;
+    public function all(array $filters = []): LengthAwarePaginator;
     public function store(array $data): Car;
     public function update(array $data, Car $car): Car;
     public function destroy(Car $car): void;

@@ -19,15 +19,33 @@ class CarController extends Controller
     {
     }
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $cars = $this->carService->getAll();
+        $filters = $request->only([
+            'model_id',
+            'year_from',
+            'year_to',
+            'min_price',
+            'max_price',
+            'fuel_id',
+            'transmission_id',
+            'category_id',
+            'per_page',
+            'sort_by',
+            'sort_order',
+            'rental_shop_id',
+            'extra_services_id',
+            'rental_type'
+        ]);
+        $cars = $this->carService->getAll($filters);
         return $this->successResponse([
             'cars' => CarResource::collection($cars),
             'pagination' => new PaginationResource($cars),
         ], __('message.success'));
     }
-
+    /**
+     * Get specific car details
+     */
     public function show(Car $car): JsonResponse
     {
         $car->load(
@@ -44,7 +62,8 @@ class CarController extends Controller
             'availabilities',
             'insurances',
             'services',
-            'deliveryOptions'
+            'deliveryOptions',
+            'rules'
         );
 
         return $this->successResponse([

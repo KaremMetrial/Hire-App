@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\BookingStatusEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Models\Booking;
+use App\Models\BookingInformationRequest;
 use App\Models\BookingStatusLog;
 use App\Repositories\Interfaces\BookingRepositoryInterface;
 use App\Repositories\Interfaces\CarRepositoryInterface;
@@ -44,18 +45,29 @@ class BookingService
     }
 
     /**
+     * Get booking statistics for a user
+     *
+     * @param int $userId
+     * @return array
+     */
+    public function getUserBookingStats(int $userId): array
+    {
+        return $this->bookingRepository->getUserBookingStats($userId);
+    }
+
+    /**
      * Confirm booking (Vendor action)
      */
     public function confirmBooking(int $bookingId, int $vendorId): Booking
     {
         $booking = $this->getBookingForVendor($bookingId, $vendorId);
 
-        if ($booking->status !== BookingStatusEnum::Pending->value) {
+        if ($booking->status !== BookingStatusEnum::Pending) {
             throw new Exception('Only pending bookings can be confirmed');
         }
 
         $booking->update([
-            'status' => BookingStatusEnum::Confirmed->value,
+            'status' => BookingStatusEnum::Confirmed,
             'confirmed_at' => now(),
         ]);
 
@@ -207,18 +219,92 @@ class BookingService
     }
 
     /**
-     * Get user bookings with filters
+     * Request additional information from user (Vendor action)
      */
-    public function getUserBookings(int $userId, ?string $status = null, ?int $perPage = 15): LengthAwarePaginator
+    public function requestBookingInfo(int $bookingId, int $vendorId, array $informationRequests): Booking
     {
-        $query = Booking::where('user_id', $userId)
-            ->with(['car.carModel', 'car.images', 'rentalShop']);
-
-        if ($status) {
-            $query->where('status', $status);
+        $booking = $this->getBookingForVendor($bookingId, $vendorId);
+        if ($booking->status != BookingStatusEnum::Pending) {
+            throw new Exception('Only pending bookings can have info requested');
         }
 
-        return $query->orderBy('created_at', 'desc')->paginate($perPage);
+        // Create information request records
+        foreach ($informationRequests as $requestData) {
+            BookingInformationRequest::create([
+                'booking_id' => $bookingId,
+                'requested_field' => $requestData['field'],
+                'is_required' => $requestData['is_required'] ?? true,
+                'notes' => $requestData['notes'] ?? null,
+            ]);
+        }
+
+        $booking->update([
+            'status' => BookingStatusEnum::InfoRequested->value,
+        ]);
+
+        $fieldsRequested = collect($informationRequests)->pluck('field')->join(', ');
+        $this->logStatusChange($booking, BookingStatusEnum::InfoRequested->value, 'vendor', $vendorId, "Info requested for fields: {$fieldsRequested}");
+
+        return $booking->fresh()->load('informationRequests');
+    }
+
+    /**
+     * Submit additional information for booking (User action)
+     */
+    public function submitBookingInfo(int $bookingId, int $userId, array $info): Booking
+    {
+        $booking = Booking::where('user_id', $userId)->findOrFail($bookingId);
+
+        if ($booking->status !== BookingStatusEnum::InfoRequested) {
+            throw new Exception('This booking is not waiting for information');
+        }
+
+        // Update information requests with submitted values
+        $pendingRequests = $booking->informationRequests()->where('status', 'pending')->get();
+
+        foreach ($pendingRequests as $request) {
+            $field = $request->requested_field;
+            if (isset($info[$field])) {
+                $value = $info[$field];
+
+                // Handle file uploads for photos
+                if (in_array($field, ['face_license_id_photo', 'back_license_id_photo']) && $value instanceof \Illuminate\Http\UploadedFile) {
+                    $value = $value->store('license-photos', 'public');
+                }
+
+                $request->markAsSubmitted($value);
+            } elseif ($request->is_required) {
+                throw new Exception("Required field '{$request->getFieldLabel()}' is missing");
+            }
+        }
+
+        // Check if all required information has been submitted
+        $remainingRequired = $booking->informationRequests()->where('status', 'pending')->where('is_required', true)->count();
+
+        if ($remainingRequired === 0) {
+            // All required info submitted, move back to pending for vendor review
+            $booking->update([
+                'status' => BookingStatusEnum::Pending,
+                'customer_notes' => $info['additional_notes'] ?? $booking->customer_notes,
+            ]);
+
+            $this->logStatusChange($booking, BookingStatusEnum::Pending->value, 'user', $userId, 'All required information submitted');
+        } else {
+            // Still waiting for some required info, keep status as info_requested
+            $booking->update([
+                'customer_notes' => $info['additional_notes'] ?? $booking->customer_notes,
+            ]);
+        }
+
+        return $booking->fresh()->load('informationRequests');
+    }
+
+    /**
+     * Get user bookings with filters
+     */
+    public function getUserBookings(int $userId, ?array $statuses = null, ?int $perPage = 15): LengthAwarePaginator
+    {
+        return $this->bookingRepository->getUserBookings($userId, $statuses, $perPage);
     }
 
     /**
@@ -295,6 +381,7 @@ class BookingService
         $completed = $query->where('status', BookingStatusEnum::Completed->value)->count();
         $cancelled = $query->where('status', BookingStatusEnum::Cancelled->value)->count();
         $rejected = $query->where('status', BookingStatusEnum::Rejected->value)->count();
+        $infoRequested = $query->where('status', BookingStatusEnum::InfoRequested->value)->count();
 
         $totalRevenue = $query->where('status', BookingStatusEnum::Completed->value)->sum('total_price');
 
@@ -306,6 +393,7 @@ class BookingService
             'completed' => $completed,
             'cancelled' => $cancelled,
             'rejected' => $rejected,
+            'info_requested' => $infoRequested,
             'total_revenue' => $totalRevenue,
         ];
     }
@@ -505,22 +593,4 @@ class BookingService
         return $this->bookingRepository->bulkUpdateBookingStatus($bookingIds, $status, $reason, $changedByType, $changedById);
     }
 
-    /**
-     * Get user booking statistics
-     */
-    public function getUserBookingStats(int $userId): array
-    {
-        $bookings = Booking::where('user_id', $userId);
-
-        return [
-            'total' => $bookings->count(),
-            'pending' => $bookings->where('status', BookingStatusEnum::Pending->value)->count(),
-            'confirmed' => $bookings->where('status', BookingStatusEnum::Confirmed->value)->count(),
-            'active' => $bookings->where('status', BookingStatusEnum::Active->value)->count(),
-            'completed' => $bookings->where('status', BookingStatusEnum::Completed->value)->count(),
-            'cancelled' => $bookings->where('status', BookingStatusEnum::Cancelled->value)->count(),
-            'rejected' => $bookings->where('status', BookingStatusEnum::Rejected->value)->count(),
-            'total_spent' => $bookings->where('status', BookingStatusEnum::Completed->value)->sum('total_price'),
-        ];
-    }
 }

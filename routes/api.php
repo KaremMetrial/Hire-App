@@ -90,9 +90,21 @@ Route::prefix('v1')->group(function () {
 
     // Authintication Middleware
     Route::middleware('auth:user')->group(function () {
+        // Auth
+        Route::controller(AuthController::class)->group(function () {
+            Route::post('/logout', 'logout');
+            Route::get('/me', 'me');
+            Route::put('/update-profile', 'updateProfile');
+            Route::delete('/delete-account', 'deleteAccount');
+        });
+
         // Booking
         Route::prefix('bookings')->controller(BookingController::class)->group(function () {
+            Route::get('/', 'index');
             Route::post('/', 'store');
+            Route::post('/{id}/cancel', 'cancel');
+            Route::post('/{id}/submit-info', 'submitInfo');
+            Route::post('/{id}/report-pickup-issue', 'reportPickupIssue');
         });
 
         // Bookmarks

@@ -38,11 +38,12 @@ return [
     ],
     'booking_status' => [
         'pending' => 'Pending',
-        'confirmed' => 'Confirmed',
+        'confirmed' => 'Waiting for Pickup',
         'active' => 'Active',
         'completed' => 'Completed',
         'cancelled' => 'Cancelled',
         'rejected' => 'Rejected',
+        'info_requested' => 'Info Requested',
     ],
     'payment_status' => [
         'unpaid' => 'Unpaid',
@@ -61,5 +62,15 @@ return [
         'card' => 'Card',
         'bank_transfer' => 'Bank Transfer',
         'online' => 'Online',
+    ],
+    'information_request_fields' => [
+        'license_number' => 'License Number',
+        'license_expiry_date' => 'License Expiry Date',
+        'face_license_id_photo' => 'Face License ID Photo',
+        'back_license_id_photo' => 'Back License ID Photo',
+        'nationality' => 'Nationality',
+        'emergency_contact_name' => 'Emergency Contact Name',
+        'emergency_contact_phone' => 'Emergency Contact Phone',
+        'driving_experience_years' => 'Driving Experience (Years)',
     ],
 ];
