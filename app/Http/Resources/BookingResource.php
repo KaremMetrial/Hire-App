@@ -131,8 +131,9 @@ class BookingResource extends JsonResource
             'documents' => $this->whenLoaded('documents', $this->documents->map(function ($document) {
                 return [
                     'id' => $document->id,
-                    'document_name' => $document->document->name ?? null,
-                    'document_type' => $document->document->type ?? null,
+                    'document_name' => $document->document?->name ?? null,
+                    'document_type' => $document->document?->input_type?->value ?? null,
+                    'document_type_label' => $document->document?->input_type?->label() ?? null,
                     'file_path' => $document->file_path ? asset('storage/'.$document->file_path) : null,
                     'document_value' => $document->document_value,
                     'verified' => $document->verified,

@@ -105,6 +105,9 @@ Route::prefix('v1')->group(function () {
             Route::post('/{id}/cancel', 'cancel');
             Route::post('/{id}/submit-info', 'submitInfo');
             Route::post('/{id}/report-pickup-issue', 'reportPickupIssue');
+            Route::post('/{id}/submit-pickup-procedure', 'submitPickupProcedure');
+            Route::post('/{id}/submit-return-procedure', 'submitReturnProcedure');
+            Route::get('/{id}/procedures', 'getProcedures');
         });
 
         // Bookmarks

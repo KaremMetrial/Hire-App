@@ -39,7 +39,7 @@ return [
     'booking_status' => [
         'pending' => 'قيد الانتظار',
         'confirmed' => 'انتظار الاستلام',
-        'active' => 'نشط',
+        'active' => 'قيد الايجار',
         'completed' => 'مكتمل',
         'cancelled' => 'ملغي',
         'rejected' => 'مرفوض',

@@ -8,6 +8,9 @@ use App\Http\Requests\User\CreateBookingRequest;
 use App\Http\Requests\User\CancelBookingRequest;
 use App\Http\Requests\User\ReportPickupIssueRequest;
 use App\Http\Requests\User\SubmitBookingInfoRequest;
+use App\Http\Requests\User\SubmitPickupProcedureRequest;
+use App\Http\Requests\User\SubmitReturnProcedureRequest;
+use App\Http\Resources\BookingProcedureResource;
 use App\Http\Resources\BookingResource;
 use App\Http\Resources\PaginationResource;
 use App\Services\BookingService;
@@ -233,10 +236,12 @@ class BookingController extends Controller
     public function reportPickupIssue(ReportPickupIssueRequest $request, int $id): JsonResponse
     {
         try {
+            $validated = $request->validated();
+
             $booking = $this->bookingService->getUserBooking($id, auth()->id());
 
             // Check if booking is in confirmed status (waiting for pickup)
-            if ($booking->status !== 'confirmed') {
+            if ($booking->status !== \App\Enums\BookingStatusEnum::Confirmed) {
                 return $this->errorResponse('You can only report pickup issues for confirmed bookings', 400);
             }
 
@@ -248,13 +253,75 @@ class BookingController extends Controller
             $issue = \App\Models\BookingPickupIssue::create([
                 'booking_id' => $booking->id,
                 'user_id' => auth()->id(),
-                'problem_details' => $request->get('problem_details'),
+                'problem_details' => $validated['problem_details'],
                 'image_path' => $imagePath,
             ]);
 
             return $this->successResponse([
                 'issue' => $issue,
             ], 'Pickup issue reported successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Submit pickup procedure
+     */
+    public function submitPickupProcedure(SubmitPickupProcedureRequest $request, int $id): JsonResponse
+    {
+        try {
+            $procedure = $this->bookingService->submitPickupProcedure(
+                $id,
+                auth()->id(),
+                $request->validated()
+            );
+            return $this->successResponse([
+                'procedure' => new BookingProcedureResource($procedure->load('images')),
+            ], 'Pickup procedure submitted successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Submit return procedure
+     */
+    public function submitReturnProcedure(SubmitReturnProcedureRequest $request, int $id): JsonResponse
+    {
+        try {
+            $procedure = $this->bookingService->submitReturnProcedure(
+                $id,
+                auth()->id(),
+                $request->validated()
+            );
+
+            return $this->successResponse([
+                'procedure' => new BookingProcedureResource($procedure),
+            ], 'Return procedure submitted successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Get booking procedures
+     */
+    public function getProcedures(int $id, Request $request): JsonResponse
+    {
+        try {
+            $type = $request->get('type'); // 'pickup' or 'return'
+            $procedures = $this->bookingService->getBookingProcedures(
+                $id,
+                auth()->id(),
+                $type
+            );
+            return $this->successResponse([
+                'procedures' => [
+                    'pickup' => BookingProcedureResource::collection($procedures['pickup']),
+                    'return' => BookingProcedureResource::collection($procedures['return']),
+                ],
+            ], 'Procedures retrieved successfully');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
         }

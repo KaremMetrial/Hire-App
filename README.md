@@ -1,61 +1,258 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Hire-App - Car Rental Management System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A comprehensive Laravel-based car rental platform that connects users with rental shops, featuring advanced booking management, procedure tracking, and vendor dashboard capabilities.
 
-## About Laravel
+## 🚀 Features
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Core Functionality
+- **Multi-user System**: Separate interfaces for users, vendors, and administrators
+- **Car Management**: Comprehensive car catalog with images, specifications, and availability
+- **Booking System**: Complete booking lifecycle from creation to completion
+- **Location Services**: GPS-based pickup and delivery options
+- **Payment Integration**: Secure payment processing with multiple methods
+- **Review System**: User reviews and ratings for rental shops and cars
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Advanced Features
+- **Pickup & Return Procedures**: Image-based procedure tracking for car handovers
+- **Real-time Notifications**: Instant updates on booking status changes
+- **Admin Dashboard**: Comprehensive analytics and management tools
+- **Vendor Management**: Dedicated vendor portal for shop management
+- **Mobile Responsive**: Optimized for all device types
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 🛠️ Tech Stack
 
-## Learning Laravel
+- **Backend**: Laravel 11.x
+- **Database**: MySQL 8.0+
+- **Frontend**: Blade templates with Tailwind CSS
+- **Authentication**: Laravel Sanctum
+- **File Storage**: Laravel Storage (local/S3)
+- **Queue System**: Laravel Queues
+- **Real-time**: Laravel Broadcasting (optional)
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+## 📋 Prerequisites
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+- PHP 8.2 or higher
+- Composer
+- MySQL 8.0+
+- Laravel Sail (recommended) or Docker
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🚀 Installation
 
-## Laravel Sponsors
+### Using Laravel Sail (Recommended)
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-username/hire-app.git
+   cd hire-app
+   ```
 
-### Premium Partners
+2. **Install PHP dependencies**
+   ```bash
+   composer install
+   ```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+3. **Copy environment file**
+   ```bash
+   cp .env.example .env
+   ```
 
-## Contributing
+4. **Generate application key**
+   ```bash
+   php artisan key:generate
+   ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+5. **Start Laravel Sail**
+   ```bash
+   ./vendor/bin/sail up -d
+   ```
 
-## Code of Conduct
+6. **Run database migrations**
+   ```bash
+   ./vendor/bin/sail artisan migrate
+   ```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+7. **Seed the database (optional)**
+   ```bash
+   ./vendor/bin/sail artisan db:seed
+   ```
 
-## Security Vulnerabilities
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Manual Installation
 
-## License
+1. **Set up your web server** (Apache/Nginx) to point to the `public` directory
+2. **Configure your database** in `.env` file
+3. **Run migrations**: `php artisan migrate`
+4. **Build assets**: `npm run build`
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## 🔧 Configuration
+
+### Environment Variables
+
+Copy `.env.example` to `.env` and configure the following:
+
+```env
+# Database
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=hire_app
+DB_USERNAME=your_username
+DB_PASSWORD=your_password
+
+# Mail Configuration
+MAIL_MAILER=smtp
+MAIL_HOST=mailpit
+MAIL_PORT=1025
+MAIL_USERNAME=null
+MAIL_PASSWORD=null
+MAIL_ENCRYPTION=null
+
+# File Storage
+FILESYSTEM_DISK=public
+
+# Payment Gateway (if applicable)
+STRIPE_KEY=your_stripe_key
+STRIPE_SECRET=your_stripe_secret
+```
+
+### Database Setup
+
+The application uses the following key tables:
+- `users` - Application users
+- `vendors` - Rental shop owners
+- `cars` - Vehicle inventory
+- `bookings` - Rental bookings
+- `booking_procedures` - Pickup/return procedures
+- `booking_procedure_images` - Procedure images
+- `rental_shops` - Rental shop information
+
+## 📖 API Documentation
+
+### Authentication
+
+The API uses token-based authentication with separate endpoints for users and vendors.
+
+#### User Authentication
+```bash
+POST /api/v1/register
+POST /api/v1/login
+```
+
+#### Vendor Authentication
+```bash
+POST /vendor/v1/register
+POST /vendor/v1/login
+```
+
+### Key Endpoints
+
+#### User Endpoints
+- `GET /api/v1/cars` - Browse available cars
+- `POST /api/v1/bookings` - Create booking
+- `POST /api/v1/bookings/{id}/submit-pickup-procedure` - Submit pickup procedure
+- `POST /api/v1/bookings/{id}/submit-return-procedure` - Submit return procedure
+- `GET /api/v1/bookings/{id}/procedures` - Get booking procedures
+
+#### Vendor Endpoints
+- `GET /vendor/v1/bookings` - Get vendor bookings
+- `POST /vendor/v1/bookings/{id}/confirm-pickup-procedure` - Confirm pickup procedure
+- `POST /vendor/v1/bookings/{id}/confirm-return-procedure` - Confirm return procedure
+- `GET /vendor/v1/bookings/{id}/procedures` - Get booking procedures
+
+## 🎯 Usage
+
+### Booking Flow
+
+1. **User Registration/Login**
+2. **Browse Cars** - Filter by location, dates, car type
+3. **Create Booking** - Select car, dates, pickup location
+4. **Submit Pickup Procedure** - Upload car condition images
+5. **Vendor Confirmation** - Vendor reviews and confirms pickup
+6. **Rental Period** - Active booking status
+7. **Submit Return Procedure** - Upload return condition images
+8. **Vendor Confirmation** - Vendor reviews and completes booking
+9. **Payment Processing** - Final charges calculation
+
+### Pickup & Return Procedures
+
+The system includes comprehensive image-based procedures:
+
+- **Pickup Procedure**: User submits car condition photos, vendor reviews and adds their own images
+- **Return Procedure**: User submits return condition photos, vendor reviews and adds their own images
+- **Status Tracking**: Real-time status updates and notifications
+- **Image Management**: Secure storage with type validation
+
+## 🧪 Testing
+
+```bash
+# Run PHP tests
+./vendor/bin/sail artisan test
+
+
+## 📦 Deployment
+
+### Production Deployment
+
+1. **Environment Setup**
+   ```bash
+   composer install --optimize-autoloader --no-dev
+   ```
+
+2. **Database Migration**
+   ```bash
+   php artisan migrate --force
+   php artisan config:cache
+   php artisan route:cache
+   php artisan view:cache
+   ```
+
+3. **Queue Workers** (if using queues)
+   ```bash
+   php artisan queue:work
+   ```
+
+4. **File Permissions**
+   ```bash
+   chown -R www-data:www-data storage
+   chown -R www-data:www-data bootstrap/cache
+   ```
+
+### Docker Deployment
+
+```bash
+# Build and run with Docker
+docker-compose up -d --build
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Development Guidelines
+
+- Follow PSR-12 coding standards
+- Write tests for new features
+- Update documentation as needed
+- Use meaningful commit messages
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Laravel Framework
+- Tailwind CSS
+- All our contributors and users
+
+## 📞 Support
+
+For support, email support@hire-app.com or join our Discord community.
+
+---
+
+**Made with ❤️ using Laravel**

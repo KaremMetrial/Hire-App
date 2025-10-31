@@ -135,6 +135,21 @@ class Booking extends Model
         return $this->hasMany(BookingPickupIssue::class);
     }
 
+    public function procedures(): HasMany
+    {
+        return $this->hasMany(BookingProcedure::class);
+    }
+
+    public function pickupProcedures(): HasMany
+    {
+        return $this->hasMany(BookingProcedure::class)->pickup();
+    }
+
+    public function returnProcedures(): HasMany
+    {
+        return $this->hasMany(BookingProcedure::class)->return();
+    }
+
     // Scopes
     public function scopePending($query)
     {

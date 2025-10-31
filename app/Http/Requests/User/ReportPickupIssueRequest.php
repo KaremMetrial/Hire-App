@@ -11,7 +11,9 @@ class ReportPickupIssueRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return true;
+        $bookingId = $this->route('id');
+        $booking = \App\Models\Booking::find($bookingId);
+        return $booking && $booking->user_id == auth()->id();
     }
 
     /**

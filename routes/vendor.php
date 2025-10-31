@@ -145,6 +145,9 @@ Route::prefix('v1')->group(function () {
             Route::post('/{id}/request-info', 'requestInfo');
             Route::post('/{id}/start', 'start');
             Route::post('/{id}/complete', 'complete');
+            Route::post('/{id}/confirm-pickup-procedure', 'confirmPickupProcedure');
+            Route::post('/{id}/confirm-return-procedure', 'confirmReturnProcedure');
+            Route::get('/{id}/procedures', 'getProcedures');
         });
     });
 });

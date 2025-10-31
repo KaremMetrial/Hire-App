@@ -6,6 +6,8 @@ use App\Enums\BookingStatusEnum;
 use App\Enums\PaymentStatusEnum;
 use App\Models\Booking;
 use App\Models\BookingInformationRequest;
+use App\Models\BookingProcedure;
+use App\Models\BookingProcedureImage;
 use App\Models\BookingStatusLog;
 use App\Repositories\Interfaces\BookingRepositoryInterface;
 use App\Repositories\Interfaces\CarRepositoryInterface;
@@ -591,6 +593,314 @@ class BookingService
     public function bulkUpdateBookingStatus(array $bookingIds, string $status, ?string $reason = null, string $changedByType = 'admin', int $changedById = null): array
     {
         return $this->bookingRepository->bulkUpdateBookingStatus($bookingIds, $status, $reason, $changedByType, $changedById);
+    }
+
+    /**
+     * Submit pickup procedure (User action)
+     */
+    public function submitPickupProcedure(int $bookingId, int $userId, array $data): BookingProcedure
+    {
+        $booking = Booking::where('user_id', $userId)->findOrFail($bookingId);
+        if ($booking->status !== BookingStatusEnum::Confirmed) {
+            throw new Exception('Only confirmed bookings can have pickup procedures submitted');
+        }
+
+        // Check if user already submitted pickup procedure
+        $existingProcedure = $booking->pickupProcedures()->byUser()->first();
+        if ($existingProcedure) {
+            throw new Exception('Pickup procedure already submitted');
+        }
+        DB::beginTransaction();
+        try {
+            $procedure = BookingProcedure::create([
+                'booking_id' => $bookingId,
+                'user_id' => $userId,
+                'type' => 'pickup',
+                'submitted_by' => 'user',
+                'notes' => $data['notes'] ?? null,
+            ]);
+            // Handle image uploads
+            if (isset($data['images']) && is_array($data['images'])) {
+                foreach ($data['images'] as $imageData) {
+                    $imagePath = $imageData['image']->store('booking-procedures', 'public');
+                    BookingProcedureImage::create([
+                        'booking_procedure_id' => $procedure->id,
+                        'image_path' => $imagePath,
+                        'image_type' => $imageData['image_type'],
+                        'uploaded_by' => 'user',
+                    ]);
+                }
+            }
+            DB::commit();
+            return $procedure->load('images');
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Confirm pickup procedure (Vendor action)
+     */
+    public function confirmPickupProcedure(int $bookingId, int $vendorId, array $data): Booking
+    {
+        $booking = $this->getBookingForVendor($bookingId, $vendorId);
+
+        if ($booking->status !== BookingStatusEnum::Confirmed) {
+            throw new Exception('Only confirmed bookings can have pickup procedures confirmed');
+        }
+
+        $userProcedure = $booking->pickupProcedures()->byUser()->first();
+        if (!$userProcedure) {
+            throw new Exception('User must submit pickup procedure before vendor can confirm');
+        }
+
+        DB::beginTransaction();
+        try {
+            // Create vendor procedure if not exists
+            $vendorProcedure = $booking->pickupProcedures()->byVendor()->first();
+            if (!$vendorProcedure) {
+                $vendorProcedure = BookingProcedure::create([
+                    'booking_id' => $bookingId,
+                    'user_id' => $booking->user_id,
+                    'type' => 'pickup',
+                    'submitted_by' => 'vendor',
+                    'notes' => $data['notes'] ?? null,
+                    'confirmed_by_vendor' => true,
+                    'confirmed_at' => now(),
+                ]);
+            } else {
+                $vendorProcedure->update([
+                    'notes' => $data['notes'] ?? $vendorProcedure->notes,
+                    'confirmed_by_vendor' => true,
+                    'confirmed_at' => now(),
+                ]);
+            }
+
+            // Handle vendor image uploads
+            if (isset($data['images']) && is_array($data['images'])) {
+                foreach ($data['images'] as $imageData) {
+                    $imagePath = $imageData['image']->store('booking-procedures', 'public');
+
+                    BookingProcedureImage::create([
+                        'booking_procedure_id' => $vendorProcedure->id,
+                        'image_path' => $imagePath,
+                        'image_type' => $imageData['image_type'],
+                        'uploaded_by' => 'vendor',
+                    ]);
+                }
+            }
+
+            // Mark user procedure as confirmed
+            $userProcedure->markAsConfirmed();
+
+            // If confirmed is true, start the booking
+            if (($data['confirmed'] ?? false)) {
+                $booking->update([
+                    'status' => BookingStatusEnum::Active,
+                    'pickup_mileage' => $data['pickup_mileage'] ?? null,
+                ]);
+
+                $this->logStatusChange($booking, BookingStatusEnum::Active->value, 'vendor', $vendorId, 'Booking started after pickup procedure confirmation');
+            }
+
+            DB::commit();
+            return $booking->fresh()->load(['pickupProcedures.images']);
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Submit return procedure (User action)
+     */
+    public function submitReturnProcedure(int $bookingId, int $userId, array $data): BookingProcedure
+    {
+        $booking = Booking::where('user_id', $userId)->findOrFail($bookingId);
+
+        if ($booking->status !== BookingStatusEnum::Active->value) {
+            throw new Exception('Only active bookings can have return procedures submitted');
+        }
+
+        // Check if user already submitted return procedure
+        $existingProcedure = $booking->returnProcedures()->byUser()->first();
+        if ($existingProcedure) {
+            throw new Exception('Return procedure already submitted');
+        }
+
+        DB::beginTransaction();
+        try {
+            $procedure = BookingProcedure::create([
+                'booking_id' => $bookingId,
+                'user_id' => $userId,
+                'type' => 'return',
+                'submitted_by' => 'user',
+                'notes' => $data['notes'] ?? null,
+            ]);
+
+            // Handle image uploads
+            if (isset($data['images']) && is_array($data['images'])) {
+                foreach ($data['images'] as $imageData) {
+                    $imagePath = $imageData['image']->store('booking-procedures', 'public');
+
+                    BookingProcedureImage::create([
+                        'booking_procedure_id' => $procedure->id,
+                        'image_path' => $imagePath,
+                        'image_type' => $imageData['image_type'],
+                        'uploaded_by' => 'user',
+                    ]);
+                }
+            }
+
+            DB::commit();
+            return $procedure->load('images');
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Confirm return procedure (Vendor action)
+     */
+    public function confirmReturnProcedure(int $bookingId, int $vendorId, array $data): Booking
+    {
+        $booking = $this->getBookingForVendor($bookingId, $vendorId);
+
+        if ($booking->status !== BookingStatusEnum::Active->value) {
+            throw new Exception('Only active bookings can have return procedures confirmed');
+        }
+
+        $userProcedure = $booking->returnProcedures()->byUser()->first();
+        if (!$userProcedure) {
+            throw new Exception('User must submit return procedure before vendor can confirm');
+        }
+
+        DB::beginTransaction();
+        try {
+            // Create vendor procedure if not exists
+            $vendorProcedure = $booking->returnProcedures()->byVendor()->first();
+            if (!$vendorProcedure) {
+                $vendorProcedure = BookingProcedure::create([
+                    'booking_id' => $bookingId,
+                    'user_id' => $booking->user_id,
+                    'type' => 'return',
+                    'submitted_by' => 'vendor',
+                    'notes' => $data['notes'] ?? null,
+                    'confirmed_by_vendor' => true,
+                    'confirmed_at' => now(),
+                ]);
+            } else {
+                $vendorProcedure->update([
+                    'notes' => $data['notes'] ?? $vendorProcedure->notes,
+                    'confirmed_by_vendor' => true,
+                    'confirmed_at' => now(),
+                ]);
+            }
+
+            // Handle vendor image uploads
+            if (isset($data['images']) && is_array($data['images'])) {
+                foreach ($data['images'] as $imageData) {
+                    $imagePath = $imageData['image']->store('booking-procedures', 'public');
+
+                    BookingProcedureImage::create([
+                        'booking_procedure_id' => $vendorProcedure->id,
+                        'image_path' => $imagePath,
+                        'image_type' => $imageData['image_type'],
+                        'uploaded_by' => 'vendor',
+                    ]);
+                }
+            }
+
+            // Mark user procedure as confirmed
+            $userProcedure->markAsConfirmed();
+
+            // Complete the booking
+            $returnMileage = $data['return_mileage'] ?? null;
+            if ($returnMileage) {
+                // Validate return mileage and calculate fee if service is available
+                if ($this->mileageValidationService) {
+                    $mileageResult = $this->mileageValidationService->calculateMileageFeeWithValidation($bookingId, $returnMileage);
+
+                    if (!$mileageResult['valid']) {
+                        throw new Exception('Invalid return mileage: ' . implode(', ', $mileageResult['errors']));
+                    }
+
+                    $mileageFee = $mileageResult['fee'];
+                    $actualMileage = $mileageResult['actual_mileage'];
+                } else {
+                    // Fallback to original logic
+                    $actualMileage = $returnMileage - $booking->pickup_mileage;
+                    $mileageFee = $this->calculateMileageFee($booking->car, $actualMileage);
+                }
+
+                $booking->update([
+                    'status' => BookingStatusEnum::Completed->value,
+                    'return_mileage' => $returnMileage,
+                    'actual_mileage_used' => $actualMileage,
+                    'mileage_fee' => $mileageFee,
+                    'completed_at' => now(),
+                ]);
+
+                // Update total price with mileage fee
+                $newTotal = $booking->calculateTotalPrice() + $mileageFee;
+                $booking->update(['total_price' => $newTotal]);
+
+                $this->logStatusChange($booking, BookingStatusEnum::Completed->value, 'vendor', $vendorId, "Booking completed after return procedure confirmation with return mileage: {$returnMileage}, mileage fee: {$mileageFee}");
+
+                // Trigger review creation if service is available
+                if ($this->autoReviewService) {
+                    $this->autoReviewService->createReviewForCompletedBooking($booking);
+                }
+            }
+
+            DB::commit();
+            return $booking->fresh()->load(['returnProcedures.images']);
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * Get booking procedures
+     */
+    public function getBookingProcedures(int $bookingId, int $userId, ?string $type = null): array
+    {
+        $booking = Booking::where('user_id', $userId)->findOrFail($bookingId);
+        $query = $booking->procedures();
+
+        if ($type) {
+            $query->where('type', $type);
+        }
+
+        $procedures = $query->with('images')->get();
+        return [
+            'pickup' => $procedures->where('type', 'pickup')->values(),
+            'return' => $procedures->where('type', 'return')->values(),
+        ];
+    }
+
+    /**
+     * Get vendor booking procedures
+     */
+    public function getVendorBookingProcedures(int $bookingId, int $vendorId, ?string $type = null): array
+    {
+        $booking = $this->getBookingForVendor($bookingId, $vendorId);
+
+        $query = $booking->procedures();
+
+        if ($type) {
+            $query->where('type', $type);
+        }
+
+        $procedures = $query->with('images')->get();
+
+        return [
+            'pickup' => $procedures->where('type', 'pickup')->values(),
+            'return' => $procedures->where('type', 'return')->values(),
+        ];
     }
 
 }

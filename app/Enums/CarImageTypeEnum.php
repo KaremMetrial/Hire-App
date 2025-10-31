@@ -21,7 +21,7 @@ enum CarImageTypeEnum: string
         return match ($this) {
             self::FRONT => __('enums.car_image.front'),
             self::BACK => __('enums.car_image.back'),
-            self::LEFT => __('cenums.ar_image.left'),
+            self::LEFT => __('enums.car_image.left'),
             self::RIGHT => __('enums.car_image.right'),
             self::INSIDE => __('enums.car_image.inside'),
             self::OTHER => __('enums.car_image.other'),

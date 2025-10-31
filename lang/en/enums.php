@@ -39,7 +39,7 @@ return [
     'booking_status' => [
         'pending' => 'Pending',
         'confirmed' => 'Waiting for Pickup',
-        'active' => 'Active',
+        'active' => 'On Rent',
         'completed' => 'Completed',
         'cancelled' => 'Cancelled',
         'rejected' => 'Rejected',

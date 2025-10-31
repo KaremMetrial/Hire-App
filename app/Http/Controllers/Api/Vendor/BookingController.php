@@ -5,9 +5,12 @@ namespace App\Http\Controllers\Api\Vendor;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Vendor\CompleteBookingRequest;
 use App\Http\Requests\Vendor\ConfirmBookingRequest;
+use App\Http\Requests\Vendor\ConfirmPickupProcedureRequest;
+use App\Http\Requests\Vendor\ConfirmReturnProcedureRequest;
 use App\Http\Requests\Vendor\RejectBookingRequest;
 use App\Http\Requests\Vendor\RequestInfoRequest;
 use App\Http\Requests\Vendor\StartBookingRequest;
+use App\Http\Resources\BookingProcedureResource;
 use App\Http\Resources\BookingResource;
 use App\Http\Resources\PaginationResource;
 use App\Services\BookingService;
@@ -313,6 +316,70 @@ class BookingController extends Controller
                 'booking_status' => $booking->status,
                 'remaining_acceptance_time' => $remainingTime,
             ], 'Remaining acceptance time retrieved successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Confirm pickup procedure
+     */
+    public function confirmPickupProcedure(ConfirmPickupProcedureRequest $request, int $id): JsonResponse
+    {
+        try {
+            $booking = $this->bookingService->confirmPickupProcedure(
+                $id,
+                auth()->id(),
+                $request->validated()
+            );
+
+            return $this->successResponse([
+                'booking' => new BookingResource($booking->load(['pickupProcedures.images'])),
+            ], 'Pickup procedure confirmed successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Confirm return procedure
+     */
+    public function confirmReturnProcedure(ConfirmReturnProcedureRequest $request, int $id): JsonResponse
+    {
+        try {
+            $booking = $this->bookingService->confirmReturnProcedure(
+                $id,
+                auth()->id(),
+                $request->validated()
+            );
+
+            return $this->successResponse([
+                'booking' => new BookingResource($booking->load(['returnProcedures.images'])),
+            ], 'Return procedure confirmed successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Get booking procedures
+     */
+    public function getProcedures(int $id, Request $request): JsonResponse
+    {
+        try {
+            $type = $request->get('type'); // 'pickup' or 'return'
+            $procedures = $this->bookingService->getVendorBookingProcedures(
+                $id,
+                auth()->id(),
+                $type
+            );
+
+            return $this->successResponse([
+                'procedures' => [
+                    'pickup' => BookingProcedureResource::collection($procedures['pickup']),
+                    'return' => BookingProcedureResource::collection($procedures['return']),
+                ],
+            ], 'Procedures retrieved successfully');
         } catch (Exception $e) {
             return $this->errorResponse($e->getMessage());
         }
