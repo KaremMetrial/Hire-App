@@ -178,6 +178,8 @@ class BookingResource extends JsonResource
             'admin_notes' => $this->admin_notes,
             'cancellation_reason' => $this->cancellation_reason,
             'rejection_reason' => $this->rejection_reason,
+            'extension_reason' => $this->extension_reason,
+            'requested_return_date' => $this->requested_return_date?->format('Y-m-d H:i:s'),
 
             // Important Dates
             'confirmed_at' => $this->confirmed_at?->format('Y-m-d H:i:s'),
@@ -207,15 +209,51 @@ class BookingResource extends JsonResource
                 ];
             })),
 
+            // Procedures
+            'procedures' => $this->whenLoaded('procedures', $this->procedures->map(function ($procedure) {
+                return [
+                    'id' => $procedure->id,
+                    'type' => $procedure->type,
+                    'type_label' => $procedure->isReturn() ? __('enums.procedure_types.return') : __('enums.procedure_types.pickup'),
+                    'submitted_by' => $procedure->submitted_by,
+                    'notes' => $procedure->notes,
+                    'confirmed_by_vendor' => $procedure->confirmed_by_vendor,
+                    'confirmed_at' => $procedure->confirmed_at,
+                    'created_at' => $procedure->created_at->format('Y-m-d H:i:s'),
+                    'images' => $procedure->images->map(function ($image) {
+                        return [
+                            'id' => $image->id,
+                            'image_path' => $image->image_path,
+                            'image_url' => $image->getImageUrl(),
+                            'image_type' => $image->image_type->value ?? $image->image_type,
+                            'image_type_label' => $image->image_type->label() ?? $image->image_type,
+                            'uploaded_by' => $image->uploaded_by,
+                        ];
+                    }),
+                    'is_return_procedure' => $procedure->isReturn(),
+                    'is_pickup_procedure' => $procedure->isPickup(),
+                ];
+            })),
+
+            // Accident Report
+            'accident_report' => $this->whenLoaded('accidentReport', function () {
+                return new BookingAccidentReportResource($this->accidentReport);
+            }),
+
             // Flags and Helpers
             'can_be_cancelled' => $this->canBeCancelled(),
             'is_pending' => $this->isPending(),
             'is_confirmed' => $this->isConfirmed(),
             'is_active' => $this->isActive(),
+            'is_under_delivery' => $this->isUnderDelivery(),
             'is_completed' => $this->isCompleted(),
             'is_cancelled' => $this->isCancelled(),
             'is_rejected' => $this->isRejected(),
             'is_info_requested' => $this->isInfoRequested(),
+            'is_accident_reported' => $this->isAccidentReported(),
+            'is_extension_requested' => $this->isExtensionRequested(),
+            'is_unreasonable_delay' => $this->isUnreasonableDelay(),
+            'is_under_dispute' => $this->isUnderDispute(),
         ];
     }
 

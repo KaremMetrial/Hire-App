@@ -107,7 +107,15 @@ Route::prefix('v1')->group(function () {
             Route::post('/{id}/report-pickup-issue', 'reportPickupIssue');
             Route::post('/{id}/submit-pickup-procedure', 'submitPickupProcedure');
             Route::post('/{id}/submit-return-procedure', 'submitReturnProcedure');
+            Route::post('/{id}/request-extension', 'requestExtension');
             Route::get('/{id}/procedures', 'getProcedures');
+        });
+
+        // Accident Reports
+        Route::prefix('accident-reports')->controller(BookingController::class)->group(function () {
+            Route::post('/', 'submitAccidentReport');
+            Route::get('/', 'getAccidentReports');
+            Route::get('/{id}', 'getAccidentReport');
         });
 
         // Bookmarks

@@ -10,10 +10,14 @@ use App\Http\Requests\User\ReportPickupIssueRequest;
 use App\Http\Requests\User\SubmitBookingInfoRequest;
 use App\Http\Requests\User\SubmitPickupProcedureRequest;
 use App\Http\Requests\User\SubmitReturnProcedureRequest;
+use App\Http\Requests\User\SubmitAccidentReportRequest;
+use App\Http\Requests\User\RequestExtensionRequest;
 use App\Http\Resources\BookingProcedureResource;
 use App\Http\Resources\BookingResource;
+use App\Http\Resources\BookingAccidentReportResource;
 use App\Http\Resources\PaginationResource;
 use App\Services\BookingService;
+use App\Services\AccidentReportService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,8 +27,10 @@ class BookingController extends Controller
 {
     use ApiResponse;
 
-    public function __construct(private BookingService $bookingService)
-    {
+    public function __construct(
+        private BookingService $bookingService,
+        private AccidentReportService $accidentReportService
+    ) {
     }
 
     /**
@@ -76,7 +82,7 @@ class BookingController extends Controller
 
         $statuses = null;
         if ($type === 'current') {
-            $statuses = ['pending', 'confirmed', 'active', 'info_requested'];
+            $statuses = ['pending', 'confirmed', 'active', 'info_requested', 'under_delivery', 'accident_reported'];
         } elseif ($type === 'completed') {
             $statuses = ['completed', 'cancelled', 'rejected'];
         } elseif ($status) {
@@ -88,7 +94,7 @@ class BookingController extends Controller
             $statuses,
         );
         return $this->successResponse([
-            'bookings' => BookingResource::collection($bookings),
+            'bookings' => BookingResource::collection($bookings->load('accidentReport')),
             'pagination' => new PaginationResource($bookings),
         ], 'message.success');
     }
@@ -110,7 +116,8 @@ class BookingController extends Controller
                     'extraServices',
                     'insurances',
                     'documents',
-                    'informationRequests'
+                    'informationRequests',
+                    'accidentReport'
                 ])),
             ], 'Booking retrieved successfully');
         } catch (\Exception $e) {
@@ -322,6 +329,78 @@ class BookingController extends Controller
                     'return' => BookingProcedureResource::collection($procedures['return']),
                 ],
             ], 'Procedures retrieved successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Submit accident report
+     */
+    public function submitAccidentReport(SubmitAccidentReportRequest $request): JsonResponse
+    {
+        try {
+            $report = $this->accidentReportService->submitAccidentReport(
+                $request->validated(),
+                auth()->id()
+            );
+
+            return $this->successResponse([
+                'accident_report' => new BookingAccidentReportResource($report->load('booking.car.carModel')),
+            ], 'Accident report submitted successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Get user's accident reports
+     */
+    public function getAccidentReports(Request $request): JsonResponse
+    {
+        try {
+            $status = $request->get('status');
+            $reports = $this->accidentReportService->getUserAccidentReports(auth()->id(), $status);
+
+            return $this->successResponse([
+                'accident_reports' => BookingAccidentReportResource::collection($reports),
+            ], 'Accident reports retrieved successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Get specific accident report
+     */
+    public function getAccidentReport(int $id): JsonResponse
+    {
+        try {
+            $report = $this->accidentReportService->getAccidentReport($id, auth()->id());
+
+            return $this->successResponse([
+                'accident_report' => new BookingAccidentReportResource($report),
+            ], 'Accident report retrieved successfully');
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage(), 404);
+        }
+    }
+
+    /**
+     * Request extension for booking
+     */
+    public function requestExtension(RequestExtensionRequest $request, int $id): JsonResponse
+    {
+        try {
+            $booking = $this->bookingService->requestExtension(
+                $id,
+                auth()->id(),
+                $request->validated()
+            );
+
+            return $this->successResponse([
+                'booking' => new BookingResource($booking),
+            ], 'Extension request submitted successfully');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());
         }

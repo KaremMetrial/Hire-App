@@ -85,7 +85,7 @@ class BookingService
     {
         $booking = $this->getBookingForVendor($bookingId, $vendorId);
 
-        if ($booking->status !== BookingStatusEnum::Pending->value) {
+        if ($booking->status !== BookingStatusEnum::Pending) {
             throw new Exception('Only pending bookings can be rejected');
         }
 
@@ -145,8 +145,8 @@ class BookingService
     {
         $booking = Booking::findOrFail($bookingId);
 
-        if ($booking->status !== BookingStatusEnum::Active->value) {
-            throw new Exception('Only active bookings can be completed');
+        if ($booking->status !== BookingStatusEnum::Active->value && $booking->status !== BookingStatusEnum::AccidentReported->value) {
+            throw new Exception('Only active or accident reported bookings can be completed');
         }
 
         // Validate return mileage and calculate fee if service is available
@@ -199,7 +199,7 @@ class BookingService
     {
         $booking = Booking::where('user_id', $userId)->findOrFail($bookingId);
 
-        if (!$booking->canBeCancelled()) {
+        if (!$booking->canBeCancelled() && !$booking->isAccidentReported()) {
             throw new Exception('This booking cannot be cancelled');
         }
 
@@ -718,10 +718,16 @@ class BookingService
     public function submitReturnProcedure(int $bookingId, int $userId, array $data): BookingProcedure
     {
         $booking = Booking::where('user_id', $userId)->findOrFail($bookingId);
-
-        if ($booking->status !== BookingStatusEnum::Active->value) {
+        if ($booking->status !== BookingStatusEnum::Active) {
             throw new Exception('Only active bookings can have return procedures submitted');
         }
+
+        // Update booking status to under_delivery when user submits return procedure
+        $booking->update([
+            'status' => BookingStatusEnum::UnderDelivery,
+        ]);
+
+        $this->logStatusChange($booking, BookingStatusEnum::UnderDelivery->value, 'user', $userId, 'Return procedure submitted by user');
 
         // Check if user already submitted return procedure
         $existingProcedure = $booking->returnProcedures()->byUser()->first();
@@ -768,8 +774,8 @@ class BookingService
     {
         $booking = $this->getBookingForVendor($bookingId, $vendorId);
 
-        if ($booking->status !== BookingStatusEnum::Active->value) {
-            throw new Exception('Only active bookings can have return procedures confirmed');
+        if ($booking->status !== BookingStatusEnum::UnderDelivery) {
+            throw new Exception('Only under delivery bookings can have return procedures confirmed');
         }
 
         $userProcedure = $booking->returnProcedures()->byUser()->first();
@@ -836,7 +842,7 @@ class BookingService
                 }
 
                 $booking->update([
-                    'status' => BookingStatusEnum::Completed->value,
+                    'status' => BookingStatusEnum::Completed,
                     'return_mileage' => $returnMileage,
                     'actual_mileage_used' => $actualMileage,
                     'mileage_fee' => $mileageFee,
@@ -861,6 +867,73 @@ class BookingService
             DB::rollBack();
             throw $e;
         }
+    }
+
+    /**
+     * Request extension for booking
+     */
+    public function requestExtension(int $bookingId, int $userId, array $data): Booking
+    {
+        $booking = Booking::where('user_id', $userId)->findOrFail($bookingId);
+
+        if (!$booking->isActive()) {
+            throw new Exception('Only active bookings can request extension');
+        }
+
+        $booking->update([
+            'status' => BookingStatusEnum::ExtensionRequested,
+            'extension_reason' => $data['reason'],
+            'requested_return_date' => $data['requested_return_date'],
+        ]);
+
+        $this->logStatusChange($booking, BookingStatusEnum::ExtensionRequested->value, 'user', $userId, 'Extension requested by user');
+
+        return $booking->fresh();
+    }
+
+    /**
+     * Approve extension request (Vendor action)
+     */
+    public function approveExtension(int $bookingId, int $vendorId): Booking
+    {
+        $booking = $this->getBookingForVendor($bookingId, $vendorId);
+
+        if ($booking->status !== BookingStatusEnum::ExtensionRequested) {
+            throw new Exception('Only extension requested bookings can be approved');
+        }
+
+        $booking->update([
+            'status' => BookingStatusEnum::Active,
+            'return_date' => $booking->requested_return_date,
+            'extension_reason' => null,
+            'requested_return_date' => null,
+        ]);
+
+        $this->logStatusChange($booking, BookingStatusEnum::Active->value, 'vendor', $vendorId, 'Extension approved by vendor');
+
+        return $booking->fresh();
+    }
+
+    /**
+     * Reject extension request (Vendor action)
+     */
+    public function rejectExtension(int $bookingId, int $vendorId): Booking
+    {
+        $booking = $this->getBookingForVendor($bookingId, $vendorId);
+
+        if ($booking->status !== BookingStatusEnum::ExtensionRequested) {
+            throw new Exception('Only extension requested bookings can be rejected');
+        }
+
+        $booking->update([
+            'status' => BookingStatusEnum::Active,
+            'extension_reason' => null,
+            'requested_return_date' => null,
+        ]);
+
+        $this->logStatusChange($booking, BookingStatusEnum::Active->value, 'vendor', $vendorId, 'Extension rejected by vendor');
+
+        return $booking->fresh();
     }
 
     /**

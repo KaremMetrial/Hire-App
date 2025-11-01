@@ -40,10 +40,15 @@ return [
         'pending' => 'قيد الانتظار',
         'confirmed' => 'انتظار الاستلام',
         'active' => 'قيد الايجار',
+        'under_delivery' => 'قيد التسليم',
         'completed' => 'مكتمل',
         'cancelled' => 'ملغي',
         'rejected' => 'مرفوض',
         'info_requested' => 'طلب معلومات',
+        'accident_reported' => 'بلاغ عن حادث',
+    'extension_requested' => 'طلب تمديد',
+    'unreasonable_delay' => 'تأخير غير مبرر',
+    'under_dispute' => 'تحت النزاع',
     ],
     'payment_status' => [
         'unpaid' => 'غير مدفوع',
@@ -72,5 +77,9 @@ return [
         'emergency_contact_name' => 'اسم جهة الاتصال في حالات الطوارئ',
         'emergency_contact_phone' => 'رقم هاتف جهة الاتصال في حالات الطوارئ',
         'driving_experience_years' => 'سنوات الخبرة في القيادة',
+    ],
+    'procedure_types' => [
+        'pickup' => 'إجراء الاستلام',
+        'return' => 'إجراء الإرجاع',
     ],
 ];

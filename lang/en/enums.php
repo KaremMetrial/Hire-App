@@ -40,10 +40,15 @@ return [
         'pending' => 'Pending',
         'confirmed' => 'Waiting for Pickup',
         'active' => 'On Rent',
+        'under_delivery' => 'Under Delivery',
         'completed' => 'Completed',
         'cancelled' => 'Cancelled',
         'rejected' => 'Rejected',
         'info_requested' => 'Info Requested',
+        'accident_reported' => 'Accident Reported',
+    'extension_requested' => 'Extension Requested',
+    'unreasonable_delay' => 'Unreasonable Delay',
+    'under_dispute' => 'Under Dispute',
     ],
     'payment_status' => [
         'unpaid' => 'Unpaid',
@@ -72,5 +77,9 @@ return [
         'emergency_contact_name' => 'Emergency Contact Name',
         'emergency_contact_phone' => 'Emergency Contact Phone',
         'driving_experience_years' => 'Driving Experience (Years)',
+    ],
+    'procedure_types' => [
+        'pickup' => 'Pickup Procedure',
+        'return' => 'Return Procedure',
     ],
 ];

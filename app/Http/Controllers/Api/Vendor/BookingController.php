@@ -69,7 +69,8 @@ class BookingController extends Controller
                     'insurances',
                     'documents',
                     'statusLogs',
-                    'informationRequests'
+                    'informationRequests',
+                    'accidentReport'
                 ])),
             ], 'Booking retrieved successfully');
         } catch (Exception $e) {
@@ -144,7 +145,7 @@ class BookingController extends Controller
             );
 
             return $this->successResponse([
-                'booking' => new BookingResource($booking),
+                'booking' => new BookingResource($booking->load('accidentReport')),
             ], 'Booking completed successfully');
         } catch (Exception $e) {
             return $this->errorResponse($e->getMessage());
@@ -386,6 +387,38 @@ class BookingController extends Controller
     }
 
     /**
+     * Approve extension request
+     */
+    public function approveExtension(int $id): JsonResponse
+    {
+        try {
+            $booking = $this->bookingService->approveExtension($id, auth()->id());
+
+            return $this->successResponse([
+                'booking' => new BookingResource($booking),
+            ], 'Extension approved successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Reject extension request
+     */
+    public function rejectExtension(int $id): JsonResponse
+    {
+        try {
+            $booking = $this->bookingService->rejectExtension($id, auth()->id());
+
+            return $this->successResponse([
+                'booking' => new BookingResource($booking),
+            ], 'Extension rejected successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
      * Get color for booking status
      */
     private function getBookingColor(string $status): string
@@ -397,6 +430,9 @@ class BookingController extends Controller
             'completed' => '#808080',
             'cancelled' => '#FF0000',
             'rejected' => '#8B0000',
+            'extension_requested' => '#FF6347',
+            'unreasonable_delay' => '#FFA500',
+            'under_dispute' => '#DC143C',
             default => '#000000',
         };
     }

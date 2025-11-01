@@ -49,6 +49,8 @@ class Booking extends Model
         'admin_notes',
         'cancellation_reason',
         'rejection_reason',
+        'extension_reason',
+        'requested_return_date',
         'confirmed_at',
         'cancelled_at',
         'completed_at',
@@ -73,6 +75,7 @@ class Booking extends Model
         'confirmed_at' => 'datetime',
         'cancelled_at' => 'datetime',
         'completed_at' => 'datetime',
+        'requested_return_date' => 'datetime',
         'status' => BookingStatusEnum::class,
         'payment_status' => PaymentStatusEnum::class,
         'pickup_location_type' => DeliveryOptionTypeEnum::class,
@@ -150,6 +153,11 @@ class Booking extends Model
         return $this->hasMany(BookingProcedure::class)->return();
     }
 
+    public function accidentReport(): HasOne
+    {
+        return $this->hasOne(BookingAccidentReport::class);
+    }
+
     // Scopes
     public function scopePending($query)
     {
@@ -164,6 +172,11 @@ class Booking extends Model
     public function scopeActive($query)
     {
         return $query->where('status', 'active');
+    }
+
+    public function scopeUnderDelivery($query)
+    {
+        return $query->where('status', 'under_delivery');
     }
 
     public function scopeCompleted($query)
@@ -181,6 +194,26 @@ class Booking extends Model
         return $query->where('status', 'info_requested');
     }
 
+    public function scopeAccidentReported($query)
+    {
+        return $query->where('status', 'accident_reported');
+    }
+
+    public function scopeExtensionRequested($query)
+    {
+        return $query->where('status', 'extension_requested');
+    }
+
+    public function scopeUnreasonableDelay($query)
+    {
+        return $query->where('status', 'unreasonable_delay');
+    }
+
+    public function scopeUnderDispute($query)
+    {
+        return $query->where('status', 'under_dispute');
+    }
+
     // Helper Methods
     public function isPending(): bool
     {
@@ -195,6 +228,11 @@ class Booking extends Model
     public function isActive(): bool
     {
         return $this->status === BookingStatusEnum::Active;
+    }
+
+    public function isUnderDelivery(): bool
+    {
+        return $this->status === BookingStatusEnum::UnderDelivery;
     }
 
     public function isCompleted(): bool
@@ -215,6 +253,26 @@ class Booking extends Model
     public function isInfoRequested(): bool
     {
         return $this->status === BookingStatusEnum::InfoRequested;
+    }
+
+    public function isExtensionRequested(): bool
+    {
+        return $this->status === BookingStatusEnum::ExtensionRequested;
+    }
+
+    public function isAccidentReported(): bool
+    {
+        return $this->status === BookingStatusEnum::AccidentReported;
+    }
+
+    public function isUnreasonableDelay(): bool
+    {
+        return $this->status === BookingStatusEnum::UnreasonableDelay;
+    }
+
+    public function isUnderDispute(): bool
+    {
+        return $this->status === BookingStatusEnum::UnderDispute;
     }
 
     public function canBeCancelled(): bool

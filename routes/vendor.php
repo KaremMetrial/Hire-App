@@ -147,6 +147,8 @@ Route::prefix('v1')->group(function () {
             Route::post('/{id}/complete', 'complete');
             Route::post('/{id}/confirm-pickup-procedure', 'confirmPickupProcedure');
             Route::post('/{id}/confirm-return-procedure', 'confirmReturnProcedure');
+            Route::post('/{id}/approve-extension', 'approveExtension');
+            Route::post('/{id}/reject-extension', 'rejectExtension');
             Route::get('/{id}/procedures', 'getProcedures');
         });
     });

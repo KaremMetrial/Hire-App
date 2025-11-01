@@ -20,7 +20,7 @@ class ConfirmReturnProcedureRequest extends FormRequest
             'images' => 'nullable|array|max:10',
             'images.*.image' => 'required|image|mimes:jpg,png,jpeg,webp|max:2048',
             'images.*.image_type' => ['required', 'string', Rule::in(CarImageTypeEnum::values())],
-            'confirmed' => 'required|boolean',
+            'confirmed' => 'required|accepted',
         ];
     }
 
