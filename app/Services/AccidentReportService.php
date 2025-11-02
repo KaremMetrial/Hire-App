@@ -70,7 +70,19 @@ class AccidentReportService
     public function getUserAccidentReports(int $userId, ?string $status = null): \Illuminate\Database\Eloquent\Collection
     {
         $query = BookingAccidentReport::where('user_id', $userId)
-            ->with(['booking.car.carModel', 'images'])
+            ->with([
+                'booking.car.carModel.brand',
+                'booking.car.images',
+                'booking.rentalShop',
+                'booking.payments',
+                'booking.extraServices',
+                'booking.insurances',
+                'booking.documents',
+                'booking.statusLogs',
+                'booking.informationRequests',
+                'booking.procedures',
+                'images'
+            ])
             ->orderBy('created_at', 'desc');
 
         if ($status) {
@@ -87,7 +99,19 @@ class AccidentReportService
     {
         return BookingAccidentReport::where('id', $reportId)
             ->where('user_id', $userId)
-            ->with(['booking.car.carModel', 'images'])
+            ->with([
+                'booking.car.carModel.brand',
+                'booking.car.images',
+                'booking.rentalShop',
+                'booking.payments',
+                'booking.extraServices',
+                'booking.insurances',
+                'booking.documents',
+                'booking.statusLogs',
+                'booking.informationRequests',
+                'booking.procedures',
+                'images'
+            ])
             ->firstOrFail();
     }
 

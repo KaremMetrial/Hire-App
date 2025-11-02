@@ -109,15 +109,9 @@ class BookingController extends Controller
 
             return $this->successResponse([
                 'booking' => new BookingResource($booking->load([
-                    'car.carModel',
-                    'car.images',
-                    'rentalShop',
-                    'payments',
-                    'extraServices',
-                    'insurances',
-                    'documents',
-                    'informationRequests',
-                    'accidentReport'
+                    'car.carModel.brand',
+                    'statusLogs',
+                    'procedures'
                 ])),
             ], 'Booking retrieved successfully');
         } catch (\Exception $e) {
@@ -230,7 +224,7 @@ class BookingController extends Controller
             );
 
             return $this->successResponse([
-                'booking' => new BookingResource($booking->load(['car', 'rentalShop', 'payments', 'extraServices', 'insurances', 'documents', 'informationRequests'])),
+                'booking' => new BookingResource($booking->load(['car.carModel.brand', 'statusLogs', 'procedures'])),
             ], 'Information submitted successfully');
         } catch (\Exception $e) {
             return $this->errorResponse($e->getMessage());

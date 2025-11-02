@@ -14,9 +14,9 @@ use App\Models\Transmission;
 use App\Services\BookingService;
 use App\Repositories\BookingRepository;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use function Pest\Laravel\{get, post, put, delete};
+use function Pest\Laravel\{get, post, put, delete, actingAs};
 
-uses(RefreshDatabase);
+uses(RefreshDatabase::class);
 
 beforeEach(function () {
     // Create test data

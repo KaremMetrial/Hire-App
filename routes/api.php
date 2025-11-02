@@ -54,15 +54,19 @@ Route::prefix('v1')->group(function () {
     });
 
     // OTP
-    Route::prefix('otp')->controller(OtpController::class)->group(function () {
+    Route::prefix('otp')->controller(OtpController::class)->middleware('throttle:otp')->group(function () {
         Route::post('/send', 'sendOtp');
         Route::post('/verify', 'verifyOtp');
     });
+
     // Auth
-    Route::controller(AuthController::class)->group(function () {
-        Route::post('/register', 'register')->name('register');
+    Route::controller(AuthController::class)->middleware('guest')->group(function () {
+        Route::post('/pre-register', 'preRegister')->name('pre-register');
+        Route::post('/complete-registration', 'completeRegistration')->name('complete-registration');
+        Route::post('/resend-pre-register-otp', 'resendPreRegisterOtp')->name('resend-pre-register-otp');
+//        Route::post('/register', 'register')->name('register'); // Keep old endpoint for backward compatibility
         Route::post('/login', 'login')->name('login');
-    })->middleware('guest');
+    });
 
     // Booking
     Route::prefix('bookings')->controller(BookingController::class)->group(function () {

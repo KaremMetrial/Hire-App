@@ -29,10 +29,19 @@
             'login' => 'تم تسجيل الدخول بنجاح.',
             'logout' => 'تم تسجيل الخروج بنجاح.',
             'password_reset' => 'تم تغيير كلمة المرور بنجاح.',
+            'pre_register_success' => 'تم التسجيل المسبق بنجاح.',
+            'invalid_credentials' => 'بيانات الدخول غير صحيحة.',
         ],
 
         // Working Day
         'working_day.created' => 'تم إنشاء يوم العمل بنجاح.',
         'working_day.updated' => 'تم تحديث يوم العمل بنجاح.',
         'working_day.index' => 'تم استرجاع أيام العمل بنجاح.',
+
+        // Registration
+        'registration.pre_registration_not_found' => 'سجل التسجيل المسبق غير موجود.',
+        'registration.pre_registration_expired' => 'انتهت صلاحية التسجيل المسبق.',
+        'registration.session_security_validation_failed' => 'فشل التحقق من أمان الجلسة. يرجى المحاولة مرة أخرى.',
+        'registration.phone_already_in_pre_registration' => 'رقم الهاتف هذا موجود بالفعل في التسجيل المسبق.',
+        'registration.email_already_in_pre_registration' => 'عنوان البريد الإلكتروني هذا موجود بالفعل في التسجيل المسبق.',
     ];

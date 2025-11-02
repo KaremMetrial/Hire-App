@@ -33,8 +33,10 @@
             if ($notifiable->email) {
                 $channels[] = 'mail';
             }
-            // لو عندك SMS service ممكن تضيفه هنا
-            // $channels[] = 'sms';
+            // SMS channel is not configured, so only use mail for now
+            // if ($notifiable->phone) {
+            //     $channels[] = 'sms';
+            // }
             return $channels;
         }
 
@@ -57,7 +59,7 @@
         public function toArray(object $notifiable): array
         {
             return [
-                //
+                'otp' => $this->otp,
             ];
         }
     }

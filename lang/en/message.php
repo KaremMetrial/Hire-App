@@ -28,6 +28,8 @@
             'login' => 'Login successfully.',
             'logout' => 'Logout successfully.',
             'password_reset' => 'Password reset successfully.',
+            'pre_register_success' => 'Pre-registration successful.',
+            'invalid_credentials' => 'Invalid credentials.',
         ],
 
         // Working Day
@@ -35,5 +37,11 @@
         'working_day.updated' => 'Working day has been updated successfully.',
         'working_day.index' => 'Working days retrieved successfully.',
 
+        // Registration
+        'registration.pre_registration_not_found' => 'Pre-registration record not found.',
+        'registration.pre_registration_expired' => 'Pre-registration has expired.',
+        'registration.session_security_validation_failed' => 'Session security validation failed. Please try again.',
+        'registration.phone_already_in_pre_registration' => 'This phone number is already in pre-registration.',
+        'registration.email_already_in_pre_registration' => 'This email address is already in pre-registration.',
 
 ];

@@ -36,6 +36,8 @@ class User extends Authenticatable
         'emergency_contact_name',
         'emergency_contact_phone',
         'driving_experience_years',
+        'failed_login_attempts',
+        'locked_until',
     ];
 
     /**
@@ -60,6 +62,8 @@ class User extends Authenticatable
             'password' => 'hashed',
             'license_expiry_date' => 'date',
             'driving_experience_years' => 'integer',
+            'failed_login_attempts' => 'integer',
+            'locked_until' => 'datetime',
         ];
     }
 

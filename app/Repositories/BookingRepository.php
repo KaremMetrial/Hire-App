@@ -91,7 +91,19 @@ class BookingRepository implements BookingRepositoryInterface
     public function getUserBookings(int $userId, ?array $statuses = null, ?int $perPage = 15): LengthAwarePaginator
     {
         $query = Booking::where('user_id', $userId)
-            ->with(['car.carModel', 'car.images', 'rentalShop']);
+            ->with([
+                'car.carModel.brand',
+                'car.images',
+                'rentalShop',
+                'payments',
+                'extraServices',
+                'insurances',
+                'documents',
+                'statusLogs',
+                'informationRequests',
+                'accidentReport',
+                'procedures'
+            ]);
 
         if ($statuses) {
             $query->whereIn('status', $statuses);
@@ -105,7 +117,20 @@ class BookingRepository implements BookingRepositoryInterface
         $rentalShopIds = $this->getVendorRentalShopIds($vendorId);
 
         $query = Booking::whereIn('rental_shop_id', $rentalShopIds)
-            ->with(['user', 'car.carModel', 'car.images']);
+            ->with([
+                'user',
+                'car.carModel.brand',
+                'car.images',
+                'rentalShop',
+                'payments',
+                'extraServices',
+                'insurances',
+                'documents',
+                'statusLogs',
+                'informationRequests',
+                'accidentReport',
+                'procedures'
+            ]);
 
         if ($status) {
             $query->where('status', $status);
@@ -116,7 +141,20 @@ class BookingRepository implements BookingRepositoryInterface
 
     public function getAllBookings(?string $status = null, ?string $dateFrom = null, ?string $dateTo = null, ?int $perPage = 15): LengthAwarePaginator
     {
-        $query = Booking::with(['user', 'car.carModel', 'rentalShop.vendor']);
+        $query = Booking::with([
+            'user',
+            'car.carModel.brand',
+            'car.images',
+            'rentalShop.vendors',
+            'payments',
+            'extraServices',
+            'insurances',
+            'documents',
+            'statusLogs',
+            'informationRequests',
+            'accidentReport',
+            'procedures'
+        ]);
 
         if ($status) {
             $query->where('status', $status);
@@ -140,7 +178,20 @@ class BookingRepository implements BookingRepositoryInterface
         return Booking::whereIn('rental_shop_id', $rentalShopIds)
             ->whereIn('status', [BookingStatusEnum::Confirmed->value, BookingStatusEnum::Pending->value, BookingStatusEnum::InfoRequested->value])
             ->whereBetween('pickup_date', [now(), now()->addDays($days)])
-            ->with(['user', 'car.carModel'])
+            ->with([
+                'user',
+                'car.carModel.brand',
+                'car.images',
+                'rentalShop',
+                'payments',
+                'extraServices',
+                'insurances',
+                'documents',
+                'statusLogs',
+                'informationRequests',
+                'accidentReport',
+                'procedures'
+            ])
             ->orderBy('pickup_date')
             ->get();
     }
@@ -151,7 +202,20 @@ class BookingRepository implements BookingRepositoryInterface
 
         return Booking::whereIn('rental_shop_id', $rentalShopIds)
             ->whereBetween('pickup_date', [$startDate, $endDate])
-            ->with(['user', 'car.carModel'])
+            ->with([
+                'user',
+                'car.carModel.brand',
+                'car.images',
+                'rentalShop',
+                'payments',
+                'extraServices',
+                'insurances',
+                'documents',
+                'statusLogs',
+                'informationRequests',
+                'accidentReport',
+                'procedures'
+            ])
             ->orderBy('pickup_date')
             ->get();
     }
@@ -166,7 +230,20 @@ class BookingRepository implements BookingRepositoryInterface
                 ->orWhere('payment_status', 'unpaid')
                 ->where('created_at', '<', now()->subHours(2));
         })
-            ->with(['user', 'car.carModel', 'rentalShop.vendor'])
+            ->with([
+                'user',
+                'car.carModel.brand',
+                'car.images',
+                'rentalShop.vendors',
+                'payments',
+                'extraServices',
+                'insurances',
+                'documents',
+                'statusLogs',
+                'informationRequests',
+                'accidentReport',
+                'procedures'
+            ])
             ->orderBy('created_at', 'desc')
             ->get();
     }
@@ -459,7 +536,20 @@ class BookingRepository implements BookingRepositoryInterface
 
     public function exportBookings(array $filters, string $format): string
     {
-        $query = Booking::with(['user', 'car.carModel', 'rentalShop']);
+        $query = Booking::with([
+            'user',
+            'car.carModel.brand',
+            'car.images',
+            'rentalShop.vendors',
+            'payments',
+            'extraServices',
+            'insurances',
+            'documents',
+            'statusLogs',
+            'informationRequests',
+            'accidentReport',
+            'procedures'
+        ]);
 
         if (isset($filters['status'])) {
             $query->where('status', $filters['status']);

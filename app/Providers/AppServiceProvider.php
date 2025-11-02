@@ -26,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Booking observer is now registered in the Booking model boot method
         Language::observe(LanguageObserver::class);
 
         LanguageSwitch::configureUsing(function (LanguageSwitch $switch) {

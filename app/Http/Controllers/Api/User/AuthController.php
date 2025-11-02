@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Api\User;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\User\CompleteRegistrationRequest;
 use App\Http\Requests\User\LoginRequest;
+use App\Http\Requests\User\PreRegisterRequest;
 use App\Http\Requests\User\RegisterRequest;
 use App\Http\Requests\User\UpdateProfileRequest;
 use App\Http\Resources\User\RentalShopResourece;
 use App\Http\Resources\User\UserResourece;
 use App\Services\User\AuthService;
+use App\Services\User\RegistrationService;
 use App\Traits\ApiResponse;
 use App\Traits\FileUploadTrait;
 use Illuminate\Http\Request;
@@ -19,10 +22,63 @@ class AuthController extends Controller
     use ApiResponse, FileUploadTrait;
 
     protected AuthService $authService;
+    protected RegistrationService $registrationService;
 
-    public function __construct(AuthService $authService)
+    public function __construct(AuthService $authService, RegistrationService $registrationService)
     {
         $this->authService = $authService;
+        $this->registrationService = $registrationService;
+    }
+
+    /**
+     * Step 1: Pre-register user with basic information and documents
+     */
+    public function preRegister(PreRegisterRequest $request)
+    {
+        try {
+            $result = $this->registrationService->preRegister($request->validated());
+
+            return $this->successResponse($result, __('message.auth.pre_register_success'));
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Step 3: Complete registration with password after OTP verification
+     */
+    public function completeRegistration(CompleteRegistrationRequest $request)
+    {
+        try {
+            $user = $this->registrationService->completeRegistration($request->validated());
+
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            return $this->successResponse([
+                'user' => new UserResourece($user),
+                'token' => $token,
+            ], __('message.auth.register'));
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Resend OTP for pre-registration
+     */
+    public function resendPreRegisterOtp(Request $request)
+    {
+        $request->validate([
+            'session_token' => 'required|string|exists:user_pre_registrations,session_token',
+        ]);
+
+        try {
+            $result = $this->registrationService->resendOtp($request->session_token);
+
+            return $this->successResponse($result, __('message.otp.sent'));
+        } catch (\Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
     }
 
     public function register(RegisterRequest $request)
@@ -78,7 +134,7 @@ class AuthController extends Controller
             return $this->errorResponse(__('message.auth.login.invalid_credentials'));
         }
 
-        $token = $user->createToken('vendor')->plainTextToken;
+        $token = $user->createToken('auth_token')->plainTextToken; // Standardized token name for consistency
 
         return $this->successResponse([
             'token' => $token,

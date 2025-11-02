@@ -62,7 +62,7 @@ class BookingController extends Controller
                     'user',
                     'car.carModel',
                     'car.images',
-                    'rentalShop.vendor',
+                    'rentalShop.vendors',
                     'payments',
                     'extraServices',
                     'insurances',

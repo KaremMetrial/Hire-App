@@ -274,6 +274,20 @@ return [
         'delivery_options' => 'Delivery Options',
         'delivery_option_type' => 'Delivery option type',
         'is_default' => 'Default',
+
+        'user' => [
+            'name' => 'User name',
+            'country_id' => 'Country',
+            'phone' => 'Phone number',
+            'email' => 'Email address',
+            'birthday' => 'Date of birth',
+            'face_license_id_photo' => 'Front side of driver\'s license',
+            'back_license_id_photo' => 'Back side of driver\'s license',
+            'avatar' => 'Profile picture',
+            'birthday_must_be_past' => 'Date of birth must be in the past',
+            'phone_already_exists' => 'Phone number already exists',
+            'email_already_exists' => 'Email address already exists',
+        ],
     ],
 
 ];

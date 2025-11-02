@@ -275,6 +275,20 @@ return [
         'delivery_options' => 'خيارات التوصيل',
         'delivery_option_type' => 'نوع خيار التوصيل',
         'is_default' => 'افتراضي',
+
+        'user' => [
+            'name' => 'اسم المستخدم',
+            'country_id' => 'الدولة',
+            'phone' => 'رقم الهاتف',
+            'email' => 'البريد الإلكتروني',
+            'birthday' => 'تاريخ الميلاد',
+            'face_license_id_photo' => 'الجانب الأمامي لرخصة القيادة',
+            'back_license_id_photo' => 'الجانب الخلفي لرخصة القيادة',
+            'avatar' => 'الصورة الشخصية',
+            'birthday_must_be_past' => 'يجب أن يكون تاريخ الميلاد في الماضي',
+            'phone_already_exists' => 'رقم الهاتف موجود بالفعل',
+            'email_already_exists' => 'البريد الإلكتروني موجود بالفعل',
+        ],
     ],
 
 ];

@@ -11,11 +11,13 @@ use App\Models\BookingProcedureImage;
 use App\Models\BookingStatusLog;
 use App\Repositories\Interfaces\BookingRepositoryInterface;
 use App\Repositories\Interfaces\CarRepositoryInterface;
+use App\Events\BookingStatusChanged;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class BookingService
 {
@@ -62,20 +64,29 @@ class BookingService
      */
     public function confirmBooking(int $bookingId, int $vendorId): Booking
     {
-        $booking = $this->getBookingForVendor($bookingId, $vendorId);
+        return DB::transaction(function () use ($bookingId, $vendorId) {
+            $booking = $this->getBookingForVendor($bookingId, $vendorId);
 
-        if ($booking->status !== BookingStatusEnum::Pending) {
-            throw new Exception('Only pending bookings can be confirmed');
-        }
+            if ($booking->status !== BookingStatusEnum::Pending->value) {
+                throw new Exception('Only pending bookings can be confirmed');
+            }
 
-        $booking->update([
-            'status' => BookingStatusEnum::Confirmed,
-            'confirmed_at' => now(),
-        ]);
+            $oldStatus = $booking->status;
+            $booking->update([
+                'status' => BookingStatusEnum::Confirmed->value,
+                'confirmed_at' => now(),
+            ]);
 
-        $this->logStatusChange($booking, BookingStatusEnum::Confirmed->value, 'vendor', $vendorId, 'Booking confirmed by vendor');
+            // Dispatch status change event
+            $this->dispatchStatusChangeEvent($booking, $oldStatus->value, $booking->status->value, [
+                'changed_by_type' => 'vendor',
+                'changed_by_id' => $vendorId,
+                'notes' => 'Booking confirmed by vendor',
+                'notify_vendor' => false,
+            ]);
 
-        return $booking->fresh();
+            return $booking->fresh();
+        });
     }
 
     /**
@@ -83,20 +94,20 @@ class BookingService
      */
     public function rejectBooking(int $bookingId, string $reason, int $vendorId): Booking
     {
-        $booking = $this->getBookingForVendor($bookingId, $vendorId);
+        return DB::transaction(function () use ($bookingId, $reason, $vendorId) {
+            $booking = $this->getBookingForVendor($bookingId, $vendorId);
 
-        if ($booking->status !== BookingStatusEnum::Pending) {
-            throw new Exception('Only pending bookings can be rejected');
-        }
+            if ($booking->status !== BookingStatusEnum::Pending->value) {
+                throw new Exception('Only pending bookings can be rejected');
+            }
 
-        $booking->update([
-            'status' => BookingStatusEnum::Rejected->value,
-            'rejection_reason' => $reason,
-        ]);
+            $booking->update([
+                'status' => BookingStatusEnum::Rejected->value,
+                'rejection_reason' => $reason,
+            ]);
 
-        $this->logStatusChange($booking, BookingStatusEnum::Rejected->value, 'vendor', $vendorId, "Booking rejected: {$reason}");
-
-        return $booking->fresh();
+            return $booking->fresh();
+        });
     }
 
     /**
@@ -104,38 +115,47 @@ class BookingService
      */
     public function startBooking(int $bookingId, int $pickupMileage): Booking
     {
-        $booking = Booking::findOrFail($bookingId);
+        return DB::transaction(function () use ($bookingId, $pickupMileage) {
+            $booking = Booking::findOrFail($bookingId);
 
-        if ($booking->status !== BookingStatusEnum::Confirmed->value) {
-            throw new Exception('Only confirmed bookings can be started');
-        }
-
-        if (now()->lt($booking->pickup_date)) {
-            throw new Exception('Cannot start booking before pickup date');
-        }
-
-        // Validate pickup mileage if service is available
-        if ($this->mileageValidationService) {
-            $mileageValidation = $this->mileageValidationService->validatePickupMileage($booking->car_id, $pickupMileage);
-
-            if (!$mileageValidation['valid']) {
-                throw new Exception('Invalid pickup mileage: ' . implode(', ', $mileageValidation['errors']));
+            if ($booking->status !== BookingStatusEnum::Confirmed->value) {
+                throw new Exception('Only confirmed bookings can be started');
             }
 
-            // Log warnings if any
-            if (!empty($mileageValidation['warnings'])) {
-                \Log::warning('Mileage warnings for booking ' . $bookingId, $mileageValidation['warnings']);
+            if (now()->lt($booking->pickup_date)) {
+                throw new Exception('Cannot start booking before pickup date');
             }
-        }
 
-        $booking->update([
-            'status' => BookingStatusEnum::Active->value,
-            'pickup_mileage' => $pickupMileage,
-        ]);
+            // Validate pickup mileage if service is available
+            if ($this->mileageValidationService) {
+                $mileageValidation = $this->mileageValidationService->validatePickupMileage($booking->car_id, $pickupMileage);
 
-        $this->logStatusChange($booking, BookingStatusEnum::Active->value, 'vendor', $booking->car->rentalShop->vendors->first()->id, "Booking started with mileage: {$pickupMileage}");
+                if (!$mileageValidation['valid']) {
+                    throw new Exception('Invalid pickup mileage: ' . implode(', ', $mileageValidation['errors']));
+                }
 
-        return $booking->fresh();
+                // Log warnings if any
+                if (!empty($mileageValidation['warnings'])) {
+                    Log::warning('Mileage warnings for booking ' . $bookingId, $mileageValidation['warnings']);
+                }
+            }
+
+            $oldStatus = $booking->status;
+            $booking->update([
+                'status' => BookingStatusEnum::Active->value,
+                'pickup_mileage' => $pickupMileage,
+            ]);
+
+            // Dispatch status change event
+            $this->dispatchStatusChangeEvent($booking, $oldStatus->value, $booking->status->value, [
+                'changed_by_type' => 'vendor',
+                'changed_by_id' => $booking->car->rentalShop->vendors->first()->id,
+                'notes' => "Booking started with mileage: {$pickupMileage}",
+                'notify_vendor' => false,
+            ]);
+
+            return $booking->fresh();
+        });
     }
 
     /**
@@ -143,53 +163,57 @@ class BookingService
      */
     public function completeBooking(int $bookingId, int $returnMileage): Booking
     {
-        $booking = Booking::findOrFail($bookingId);
+        return DB::transaction(function () use ($bookingId, $returnMileage) {
+            $booking = Booking::findOrFail($bookingId);
 
-        if ($booking->status !== BookingStatusEnum::Active->value && $booking->status !== BookingStatusEnum::AccidentReported->value) {
-            throw new Exception('Only active or accident reported bookings can be completed');
-        }
-
-        // Validate return mileage and calculate fee if service is available
-        if ($this->mileageValidationService) {
-            $mileageResult = $this->mileageValidationService->calculateMileageFeeWithValidation($bookingId, $returnMileage);
-
-            if (!$mileageResult['valid']) {
-                throw new Exception('Invalid return mileage: ' . implode(', ', $mileageResult['errors']));
+            if ($booking->status !== BookingStatusEnum::Active->value && $booking->status !== BookingStatusEnum::AccidentReported->value) {
+                throw new Exception('Only active or accident reported bookings can be completed');
             }
 
-            // Log warnings if any
-            if (!empty($mileageResult['warnings'])) {
-                \Log::warning('Mileage warnings for booking completion ' . $bookingId, $mileageResult['warnings']);
+            // Validate return mileage and calculate fee if service is available
+            if ($this->mileageValidationService) {
+                $mileageResult = $this->mileageValidationService->calculateMileageFeeWithValidation($bookingId, $returnMileage);
+
+                if (!$mileageResult['valid']) {
+                    throw new Exception('Invalid return mileage: ' . implode(', ', $mileageResult['errors']));
+                }
+
+                // Log warnings if any
+                if (!empty($mileageResult['warnings'])) {
+                    Log::warning('Mileage warnings for booking completion ' . $bookingId, $mileageResult['warnings']);
+                }
+
+                $mileageFee = $mileageResult['fee'];
+                $actualMileage = $mileageResult['actual_mileage'];
+            } else {
+                // Fallback to original logic
+                $actualMileage = $returnMileage - $booking->pickup_mileage;
+                $mileageFee = $this->calculateMileageFee($booking->car, $actualMileage);
             }
 
-            $mileageFee = $mileageResult['fee'];
-            $actualMileage = $mileageResult['actual_mileage'];
-        } else {
-            // Fallback to original logic
-            $actualMileage = $returnMileage - $booking->pickup_mileage;
-            $mileageFee = $this->calculateMileageFee($booking->car, $actualMileage);
-        }
+            $oldStatus = $booking->status;
+            $booking->update([
+                'status' => BookingStatusEnum::Completed->value,
+                'return_mileage' => $returnMileage,
+                'actual_mileage_used' => $actualMileage,
+                'mileage_fee' => $mileageFee,
+                'completed_at' => now(),
+            ]);
 
-        $booking->update([
-            'status' => BookingStatusEnum::Completed->value,
-            'return_mileage' => $returnMileage,
-            'actual_mileage_used' => $actualMileage,
-            'mileage_fee' => $mileageFee,
-            'completed_at' => now(),
-        ]);
+            // Update total price with mileage fee
+            $newTotal = $booking->calculateTotalPrice() + $mileageFee;
+            $booking->update(['total_price' => $newTotal]);
 
-        // Update total price with mileage fee
-        $newTotal = $booking->calculateTotalPrice() + $mileageFee;
-        $booking->update(['total_price' => $newTotal]);
+            // Dispatch status change event
+            $this->dispatchStatusChangeEvent($booking, $oldStatus->value, $booking->status->value, [
+                'changed_by_type' => 'vendor',
+                'changed_by_id' => $booking->car->rentalShop->vendors->first()->id,
+                'notes' => "Booking completed with return mileage: {$returnMileage}",
+                'notify_vendor' => false,
+            ]);
 
-        $this->logStatusChange($booking, BookingStatusEnum::Completed->value, 'vendor', $booking->car->rentalShop->vendors->first()->id, "Booking completed with return mileage: {$returnMileage}, mileage fee: {$mileageFee}");
-
-        // Trigger review creation if service is available
-        if ($this->autoReviewService) {
-            $this->autoReviewService->createReviewForCompletedBooking($booking);
-        }
-
-        return $booking->fresh();
+            return $booking->fresh();
+        });
     }
 
     /**
@@ -197,27 +221,36 @@ class BookingService
      */
     public function cancelBooking(int $bookingId, int $userId, ?string $reason = null): Booking
     {
-        $booking = Booking::where('user_id', $userId)->findOrFail($bookingId);
+        return DB::transaction(function () use ($bookingId, $userId, $reason) {
+            $booking = Booking::where('user_id', $userId)->findOrFail($bookingId);
 
-        if (!$booking->canBeCancelled() && !$booking->isAccidentReported()) {
-            throw new Exception('This booking cannot be cancelled');
-        }
+            if (!$booking->canBeCancelled() && !$booking->isAccidentReported()) {
+                throw new Exception('This booking cannot be cancelled');
+            }
 
-        $cancellationFee = $this->calculateCancellationFee($booking);
+            $cancellationFee = $this->calculateCancellationFee($booking);
+            $oldStatus = $booking->status;
 
-        $booking->update([
-            'status' => BookingStatusEnum::Cancelled->value,
-            'cancellation_reason' => $reason,
-            'cancelled_at' => now(),
-        ]);
+            $booking->update([
+                'status' => BookingStatusEnum::Cancelled->value,
+                'cancellation_reason' => $reason,
+                'cancelled_at' => now(),
+            ]);
 
-        if ($cancellationFee > 0) {
-            $booking->update(['cancellation_fee' => $cancellationFee]);
-        }
+            if ($cancellationFee > 0) {
+                $booking->update(['cancellation_fee' => $cancellationFee]);
+            }
 
-        $this->logStatusChange($booking, BookingStatusEnum::Cancelled->value, 'user', $userId, $reason ?? 'Booking cancelled by user');
+            // Dispatch status change event
+            $this->dispatchStatusChangeEvent($booking, $oldStatus->value, $booking->status->value, [
+                'changed_by_type' => 'user',
+                'changed_by_id' => $userId,
+                'notes' => $reason ?? 'Booking cancelled by user',
+                'notify_vendor' => true,
+            ]);
 
-        return $booking->fresh();
+            return $booking->fresh();
+        });
     }
 
     /**
@@ -225,29 +258,28 @@ class BookingService
      */
     public function requestBookingInfo(int $bookingId, int $vendorId, array $informationRequests): Booking
     {
-        $booking = $this->getBookingForVendor($bookingId, $vendorId);
-        if ($booking->status != BookingStatusEnum::Pending) {
-            throw new Exception('Only pending bookings can have info requested');
-        }
+        return DB::transaction(function () use ($bookingId, $vendorId, $informationRequests) {
+            $booking = $this->getBookingForVendor($bookingId, $vendorId);
+            if ($booking->status != BookingStatusEnum::Pending->value) {
+                throw new Exception('Only pending bookings can have info requested');
+            }
 
-        // Create information request records
-        foreach ($informationRequests as $requestData) {
-            BookingInformationRequest::create([
-                'booking_id' => $bookingId,
-                'requested_field' => $requestData['field'],
-                'is_required' => $requestData['is_required'] ?? true,
-                'notes' => $requestData['notes'] ?? null,
+            // Create information request records
+            foreach ($informationRequests as $requestData) {
+                BookingInformationRequest::create([
+                    'booking_id' => $bookingId,
+                    'requested_field' => $requestData['field'],
+                    'is_required' => $requestData['is_required'] ?? true,
+                    'notes' => $requestData['notes'] ?? null,
+                ]);
+            }
+
+            $booking->update([
+                'status' => BookingStatusEnum::InfoRequested->value,
             ]);
-        }
 
-        $booking->update([
-            'status' => BookingStatusEnum::InfoRequested->value,
-        ]);
-
-        $fieldsRequested = collect($informationRequests)->pluck('field')->join(', ');
-        $this->logStatusChange($booking, BookingStatusEnum::InfoRequested->value, 'vendor', $vendorId, "Info requested for fields: {$fieldsRequested}");
-
-        return $booking->fresh()->load('informationRequests');
+            return $booking->fresh()->load('informationRequests');
+        });
     }
 
     /**
@@ -255,50 +287,50 @@ class BookingService
      */
     public function submitBookingInfo(int $bookingId, int $userId, array $info): Booking
     {
-        $booking = Booking::where('user_id', $userId)->findOrFail($bookingId);
+        return DB::transaction(function () use ($bookingId, $userId, $info) {
+            $booking = Booking::where('user_id', $userId)->findOrFail($bookingId);
 
-        if ($booking->status !== BookingStatusEnum::InfoRequested) {
-            throw new Exception('This booking is not waiting for information');
-        }
-
-        // Update information requests with submitted values
-        $pendingRequests = $booking->informationRequests()->where('status', 'pending')->get();
-
-        foreach ($pendingRequests as $request) {
-            $field = $request->requested_field;
-            if (isset($info[$field])) {
-                $value = $info[$field];
-
-                // Handle file uploads for photos
-                if (in_array($field, ['face_license_id_photo', 'back_license_id_photo']) && $value instanceof \Illuminate\Http\UploadedFile) {
-                    $value = $value->store('license-photos', 'public');
-                }
-
-                $request->markAsSubmitted($value);
-            } elseif ($request->is_required) {
-                throw new Exception("Required field '{$request->getFieldLabel()}' is missing");
+            if ($booking->status !== BookingStatusEnum::InfoRequested->value) {
+                throw new Exception('This booking is not waiting for information');
             }
-        }
 
-        // Check if all required information has been submitted
-        $remainingRequired = $booking->informationRequests()->where('status', 'pending')->where('is_required', true)->count();
+            // Update information requests with submitted values
+            $pendingRequests = $booking->informationRequests()->where('status', 'pending')->get();
 
-        if ($remainingRequired === 0) {
-            // All required info submitted, move back to pending for vendor review
-            $booking->update([
-                'status' => BookingStatusEnum::Pending,
-                'customer_notes' => $info['additional_notes'] ?? $booking->customer_notes,
-            ]);
+            foreach ($pendingRequests as $request) {
+                $field = $request->requested_field;
+                if (isset($info[$field])) {
+                    $value = $info[$field];
 
-            $this->logStatusChange($booking, BookingStatusEnum::Pending->value, 'user', $userId, 'All required information submitted');
-        } else {
-            // Still waiting for some required info, keep status as info_requested
-            $booking->update([
-                'customer_notes' => $info['additional_notes'] ?? $booking->customer_notes,
-            ]);
-        }
+                    // Handle file uploads for photos
+                    if (in_array($field, ['face_license_id_photo', 'back_license_id_photo']) && $value instanceof \Illuminate\Http\UploadedFile) {
+                        $value = $value->store('license-photos', 'public');
+                    }
 
-        return $booking->fresh()->load('informationRequests');
+                    $request->markAsSubmitted($value);
+                } elseif ($request->is_required) {
+                    throw new Exception("Required field '{$request->getFieldLabel()}' is missing");
+                }
+            }
+
+            // Check if all required information has been submitted
+            $remainingRequired = $booking->informationRequests()->where('status', 'pending')->where('is_required', true)->count();
+
+            if ($remainingRequired === 0) {
+                // All required info submitted, move back to pending for vendor review
+                $booking->update([
+                    'status' => BookingStatusEnum::Pending->value,
+                    'customer_notes' => $info['additional_notes'] ?? $booking->customer_notes,
+                ]);
+            } else {
+                // Still waiting for some required info, keep status as info_requested
+                $booking->update([
+                    'customer_notes' => $info['additional_notes'] ?? $booking->customer_notes,
+                ]);
+            }
+
+            return $booking->fresh()->load('informationRequests');
+        });
     }
 
     /**
@@ -314,16 +346,8 @@ class BookingService
      */
     public function getVendorBookings(int $vendorId, ?string $status = null, ?int $perPage = 15): LengthAwarePaginator
     {
-        $rentalShopIds = $this->getVendorRentalShopIds($vendorId);
-
-        $query = Booking::whereIn('rental_shop_id', $rentalShopIds)
-            ->with(['user', 'car.carModel', 'car.images']);
-
-        if ($status) {
-            $query->where('status', $status);
-        }
-
-        return $query->orderBy('created_at', 'desc')->paginate($perPage);
+        // Use repository method instead of duplicating logic
+        return $this->bookingRepository->getVendorBookings($vendorId, $status, $perPage);
     }
 
     /**
@@ -331,7 +355,7 @@ class BookingService
      */
     public function getAllBookings(?string $status = null, ?string $dateFrom = null, ?string $dateTo = null, ?int $perPage = 15): LengthAwarePaginator
     {
-        $query = Booking::with(['user', 'car.carModel', 'rentalShop.vendor']);
+        $query = Booking::with(['user', 'car.carModel', 'rentalShop.vendors']);
 
         if ($status) {
             $query->where('status', $status);
@@ -353,15 +377,8 @@ class BookingService
      */
     public function getUpcomingBookings(int $vendorId, int $days = 7): array
     {
-        $rentalShopIds = $this->getVendorRentalShopIds($vendorId);
-
-        return Booking::whereIn('rental_shop_id', $rentalShopIds)
-            ->whereIn('status', [BookingStatusEnum::Confirmed->value, BookingStatusEnum::Pending->value])
-            ->whereBetween('pickup_date', [now(), now()->addDays($days)])
-            ->with(['user', 'car.carModel'])
-            ->orderBy('pickup_date')
-            ->get()
-            ->toArray();
+        // Use repository method instead of duplicating logic
+        return $this->bookingRepository->getUpcomingBookings($vendorId, $days)->toArray();
     }
 
     /**
@@ -440,6 +457,24 @@ class BookingService
     private function calculateCancellationFee(Booking $booking): float
     {
         return $this->bookingRepository->calculateCancellationFee($booking);
+    }
+
+    /**
+     * Dispatch status change event with proper error handling
+     */
+    protected function dispatchStatusChangeEvent(Booking $booking, string $oldStatus, string $newStatus, array $context = []): void
+    {
+        try {
+            BookingStatusChanged::dispatch($booking, $oldStatus, $newStatus, $context);
+        } catch (Exception $e) {
+            // Log the error but don't break the booking operation
+            Log::error('Failed to dispatch booking status change event', [
+                'booking_id' => $booking->id,
+                'old_status' => $oldStatus,
+                'new_status' => $newStatus,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**
@@ -576,6 +611,7 @@ class BookingService
      */
     public function getVendorBookingsByDateRange(int $vendorId, string $startDate, string $endDate): array
     {
+        // Use repository method instead of duplicating logic
         return $this->bookingRepository->getVendorBookingsByDateRange($vendorId, $startDate, $endDate)->toArray();
     }
 
@@ -600,18 +636,18 @@ class BookingService
      */
     public function submitPickupProcedure(int $bookingId, int $userId, array $data): BookingProcedure
     {
-        $booking = Booking::where('user_id', $userId)->findOrFail($bookingId);
-        if ($booking->status !== BookingStatusEnum::Confirmed) {
-            throw new Exception('Only confirmed bookings can have pickup procedures submitted');
-        }
+        return DB::transaction(function () use ($bookingId, $userId, $data) {
+            $booking = Booking::where('user_id', $userId)->findOrFail($bookingId);
+            if ($booking->status !== BookingStatusEnum::Confirmed->value) {
+                throw new Exception('Only confirmed bookings can have pickup procedures submitted');
+            }
 
-        // Check if user already submitted pickup procedure
-        $existingProcedure = $booking->pickupProcedures()->byUser()->first();
-        if ($existingProcedure) {
-            throw new Exception('Pickup procedure already submitted');
-        }
-        DB::beginTransaction();
-        try {
+            // Check if user already submitted pickup procedure
+            $existingProcedure = $booking->pickupProcedures()->byUser()->first();
+            if ($existingProcedure) {
+                throw new Exception('Pickup procedure already submitted');
+            }
+
             $procedure = BookingProcedure::create([
                 'booking_id' => $bookingId,
                 'user_id' => $userId,
@@ -619,6 +655,7 @@ class BookingService
                 'submitted_by' => 'user',
                 'notes' => $data['notes'] ?? null,
             ]);
+
             // Handle image uploads
             if (isset($data['images']) && is_array($data['images'])) {
                 foreach ($data['images'] as $imageData) {
@@ -631,12 +668,9 @@ class BookingService
                     ]);
                 }
             }
-            DB::commit();
+
             return $procedure->load('images');
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        });
     }
 
     /**
@@ -644,19 +678,18 @@ class BookingService
      */
     public function confirmPickupProcedure(int $bookingId, int $vendorId, array $data): Booking
     {
-        $booking = $this->getBookingForVendor($bookingId, $vendorId);
+        return DB::transaction(function () use ($bookingId, $vendorId, $data) {
+            $booking = $this->getBookingForVendor($bookingId, $vendorId);
 
-        if ($booking->status !== BookingStatusEnum::Confirmed) {
-            throw new Exception('Only confirmed bookings can have pickup procedures confirmed');
-        }
+            if ($booking->status !== BookingStatusEnum::Confirmed->value) {
+                throw new Exception('Only confirmed bookings can have pickup procedures confirmed');
+            }
 
-        $userProcedure = $booking->pickupProcedures()->byUser()->first();
-        if (!$userProcedure) {
-            throw new Exception('User must submit pickup procedure before vendor can confirm');
-        }
+            $userProcedure = $booking->pickupProcedures()->byUser()->first();
+            if (!$userProcedure) {
+                throw new Exception('User must submit pickup procedure before vendor can confirm');
+            }
 
-        DB::beginTransaction();
-        try {
             // Create vendor procedure if not exists
             $vendorProcedure = $booking->pickupProcedures()->byVendor()->first();
             if (!$vendorProcedure) {
@@ -697,19 +730,13 @@ class BookingService
             // If confirmed is true, start the booking
             if (($data['confirmed'] ?? false)) {
                 $booking->update([
-                    'status' => BookingStatusEnum::Active,
+                    'status' => BookingStatusEnum::Active->value,
                     'pickup_mileage' => $data['pickup_mileage'] ?? null,
                 ]);
-
-                $this->logStatusChange($booking, BookingStatusEnum::Active->value, 'vendor', $vendorId, 'Booking started after pickup procedure confirmation');
             }
 
-            DB::commit();
             return $booking->fresh()->load(['pickupProcedures.images']);
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        });
     }
 
     /**
@@ -717,26 +744,23 @@ class BookingService
      */
     public function submitReturnProcedure(int $bookingId, int $userId, array $data): BookingProcedure
     {
-        $booking = Booking::where('user_id', $userId)->findOrFail($bookingId);
-        if ($booking->status !== BookingStatusEnum::Active) {
-            throw new Exception('Only active bookings can have return procedures submitted');
-        }
+        return DB::transaction(function () use ($bookingId, $userId, $data) {
+            $booking = Booking::where('user_id', $userId)->findOrFail($bookingId);
+            if ($booking->status !== BookingStatusEnum::Active->value) {
+                throw new Exception('Only active bookings can have return procedures submitted');
+            }
 
-        // Update booking status to under_delivery when user submits return procedure
-        $booking->update([
-            'status' => BookingStatusEnum::UnderDelivery,
-        ]);
+            // Update booking status to under_delivery when user submits return procedure
+            $booking->update([
+                'status' => BookingStatusEnum::UnderDelivery->value,
+            ]);
 
-        $this->logStatusChange($booking, BookingStatusEnum::UnderDelivery->value, 'user', $userId, 'Return procedure submitted by user');
+            // Check if user already submitted return procedure
+            $existingProcedure = $booking->returnProcedures()->byUser()->first();
+            if ($existingProcedure) {
+                throw new Exception('Return procedure already submitted');
+            }
 
-        // Check if user already submitted return procedure
-        $existingProcedure = $booking->returnProcedures()->byUser()->first();
-        if ($existingProcedure) {
-            throw new Exception('Return procedure already submitted');
-        }
-
-        DB::beginTransaction();
-        try {
             $procedure = BookingProcedure::create([
                 'booking_id' => $bookingId,
                 'user_id' => $userId,
@@ -759,12 +783,8 @@ class BookingService
                 }
             }
 
-            DB::commit();
             return $procedure->load('images');
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        });
     }
 
     /**
@@ -772,19 +792,18 @@ class BookingService
      */
     public function confirmReturnProcedure(int $bookingId, int $vendorId, array $data): Booking
     {
-        $booking = $this->getBookingForVendor($bookingId, $vendorId);
+        return DB::transaction(function () use ($bookingId, $vendorId, $data) {
+            $booking = $this->getBookingForVendor($bookingId, $vendorId);
 
-        if ($booking->status !== BookingStatusEnum::UnderDelivery) {
-            throw new Exception('Only under delivery bookings can have return procedures confirmed');
-        }
+            if ($booking->status !== BookingStatusEnum::UnderDelivery->value) {
+                throw new Exception('Only under delivery bookings can have return procedures confirmed');
+            }
 
-        $userProcedure = $booking->returnProcedures()->byUser()->first();
-        if (!$userProcedure) {
-            throw new Exception('User must submit return procedure before vendor can confirm');
-        }
+            $userProcedure = $booking->returnProcedures()->byUser()->first();
+            if (!$userProcedure) {
+                throw new Exception('User must submit return procedure before vendor can confirm');
+            }
 
-        DB::beginTransaction();
-        try {
             // Create vendor procedure if not exists
             $vendorProcedure = $booking->returnProcedures()->byVendor()->first();
             if (!$vendorProcedure) {
@@ -842,7 +861,7 @@ class BookingService
                 }
 
                 $booking->update([
-                    'status' => BookingStatusEnum::Completed,
+                    'status' => BookingStatusEnum::Completed->value,
                     'return_mileage' => $returnMileage,
                     'actual_mileage_used' => $actualMileage,
                     'mileage_fee' => $mileageFee,
@@ -852,21 +871,10 @@ class BookingService
                 // Update total price with mileage fee
                 $newTotal = $booking->calculateTotalPrice() + $mileageFee;
                 $booking->update(['total_price' => $newTotal]);
-
-                $this->logStatusChange($booking, BookingStatusEnum::Completed->value, 'vendor', $vendorId, "Booking completed after return procedure confirmation with return mileage: {$returnMileage}, mileage fee: {$mileageFee}");
-
-                // Trigger review creation if service is available
-                if ($this->autoReviewService) {
-                    $this->autoReviewService->createReviewForCompletedBooking($booking);
-                }
             }
 
-            DB::commit();
             return $booking->fresh()->load(['returnProcedures.images']);
-        } catch (Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        });
     }
 
     /**
@@ -874,21 +882,30 @@ class BookingService
      */
     public function requestExtension(int $bookingId, int $userId, array $data): Booking
     {
-        $booking = Booking::where('user_id', $userId)->findOrFail($bookingId);
+        return DB::transaction(function () use ($bookingId, $userId, $data) {
+            $booking = Booking::where('user_id', $userId)->findOrFail($bookingId);
 
-        if (!$booking->isActive()) {
-            throw new Exception('Only active bookings can request extension');
-        }
+            if (!$booking->isActive()) {
+                throw new Exception('Only active bookings can request extension');
+            }
 
-        $booking->update([
-            'status' => BookingStatusEnum::ExtensionRequested,
-            'extension_reason' => $data['reason'],
-            'requested_return_date' => $data['requested_return_date'],
-        ]);
+            $oldStatus = $booking->status;
+            $booking->update([
+                'status' => BookingStatusEnum::ExtensionRequested->value,
+                'extension_reason' => $data['reason'],
+                'requested_return_date' => $data['requested_return_date'],
+            ]);
 
-        $this->logStatusChange($booking, BookingStatusEnum::ExtensionRequested->value, 'user', $userId, 'Extension requested by user');
+            // Dispatch status change event
+            $this->dispatchStatusChangeEvent($booking, $oldStatus->value, $booking->status->value, [
+                'changed_by_type' => 'user',
+                'changed_by_id' => $userId,
+                'notes' => 'Extension requested by user',
+                'notify_vendor' => true,
+            ]);
 
-        return $booking->fresh();
+            return $booking->fresh();
+        });
     }
 
     /**
@@ -896,22 +913,31 @@ class BookingService
      */
     public function approveExtension(int $bookingId, int $vendorId): Booking
     {
-        $booking = $this->getBookingForVendor($bookingId, $vendorId);
+        return DB::transaction(function () use ($bookingId, $vendorId) {
+            $booking = $this->getBookingForVendor($bookingId, $vendorId);
 
-        if ($booking->status !== BookingStatusEnum::ExtensionRequested) {
-            throw new Exception('Only extension requested bookings can be approved');
-        }
+            if ($booking->status !== BookingStatusEnum::ExtensionRequested->value) {
+                throw new Exception('Only extension requested bookings can be approved');
+            }
 
-        $booking->update([
-            'status' => BookingStatusEnum::Active,
-            'return_date' => $booking->requested_return_date,
-            'extension_reason' => null,
-            'requested_return_date' => null,
-        ]);
+            $oldStatus = $booking->status;
+            $booking->update([
+                'status' => BookingStatusEnum::Active->value,
+                'return_date' => $booking->requested_return_date,
+                'extension_reason' => null,
+                'requested_return_date' => null,
+            ]);
 
-        $this->logStatusChange($booking, BookingStatusEnum::Active->value, 'vendor', $vendorId, 'Extension approved by vendor');
+            // Dispatch status change event
+            $this->dispatchStatusChangeEvent($booking, $oldStatus->value, $booking->status->value, [
+                'changed_by_type' => 'vendor',
+                'changed_by_id' => $vendorId,
+                'notes' => 'Extension approved by vendor',
+                'notify_vendor' => false,
+            ]);
 
-        return $booking->fresh();
+            return $booking->fresh();
+        });
     }
 
     /**
@@ -919,21 +945,30 @@ class BookingService
      */
     public function rejectExtension(int $bookingId, int $vendorId): Booking
     {
-        $booking = $this->getBookingForVendor($bookingId, $vendorId);
+        return DB::transaction(function () use ($bookingId, $vendorId) {
+            $booking = $this->getBookingForVendor($bookingId, $vendorId);
 
-        if ($booking->status !== BookingStatusEnum::ExtensionRequested) {
-            throw new Exception('Only extension requested bookings can be rejected');
-        }
+            if ($booking->status !== BookingStatusEnum::ExtensionRequested->value) {
+                throw new Exception('Only extension requested bookings can be rejected');
+            }
 
-        $booking->update([
-            'status' => BookingStatusEnum::Active,
-            'extension_reason' => null,
-            'requested_return_date' => null,
-        ]);
+            $oldStatus = $booking->status;
+            $booking->update([
+                'status' => BookingStatusEnum::Active->value,
+                'extension_reason' => null,
+                'requested_return_date' => null,
+            ]);
 
-        $this->logStatusChange($booking, BookingStatusEnum::Active->value, 'vendor', $vendorId, 'Extension rejected by vendor');
+            // Dispatch status change event
+            $this->dispatchStatusChangeEvent($booking, $oldStatus->value, $booking->status->value, [
+                'changed_by_type' => 'vendor',
+                'changed_by_id' => $vendorId,
+                'notes' => 'Extension rejected by vendor',
+                'notify_vendor' => false,
+            ]);
 
-        return $booking->fresh();
+            return $booking->fresh();
+        });
     }
 
     /**

@@ -20,25 +20,30 @@ class LoginRequest extends FormRequest
      */
     public function rules(): array
     {
-        // A simple check to see if the identifier looks like a phone number (all digits).
-        $isPhone = preg_match('/^\d+$/', $this->identifier);
+        // Improved phone validation: allows international formats with + and spaces
+        $isPhone = preg_match('/^[\+]?[\d\s\-\(\)]+$/', $this->identifier);
 
         return [
             'identifier' => [
                 'required',
                 'string',
+                'max:255',
                 // If it looks like a phone number, validate as a phone.
                 Rule::when($isPhone, [
-                    'numeric',
+                    'regex:/^[\+]?[\d\s\-\(\)]+$/',
                     Rule::exists('users', 'phone'),
                 ]),
                 // Otherwise, validate as an email.
                 Rule::when(! $isPhone, [
-                    'email',
+//                    'email:rfc,dns',
+                        'email',
                     Rule::exists('users', 'email'),
                 ]),
             ],
-            'password' => ['required', 'string', 'min:8'],
+            'password' => [
+                'required',
+                'string',
+            ],
         ];
     }
 
@@ -48,5 +53,16 @@ class LoginRequest extends FormRequest
             'identifier' => __('validation.attributes.identifier'),
             'password' => __('validation.attributes.password'),
         ];
+    }
+
+    /**
+     * Prepare the data for validation.
+     */
+    protected function prepareForValidation(): void
+    {
+        // Sanitize identifier input to prevent injection attacks
+        $this->merge([
+            'identifier' => trim(strip_tags($this->identifier)),
+        ]);
     }
 }

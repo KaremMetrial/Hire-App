@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\BookingStatusEnum;
 use App\Enums\DeliveryOptionTypeEnum;
 use App\Enums\PaymentStatusEnum;
+use App\Observers\BookingObserver;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -311,5 +312,8 @@ class Booking extends Model
                 $booking->booking_number = 'BK-'.date('Ymd').'-'.strtoupper(substr(uniqid(), -6));
             }
         });
+
+        // Register the observer
+        static::observe(BookingObserver::class);
     }
 }

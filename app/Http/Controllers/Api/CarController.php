@@ -19,7 +19,21 @@ class CarController extends Controller
 
     public function index(): JsonResponse
     {
-        $cars = $this->carService->getAll();
+        $cars = $this->carService->getAll()->load([
+            'carModel.brand',
+            'fuel',
+            'transmission',
+            'category',
+            'rentalShop.vendors',
+            'city',
+            'images',
+            'prices',
+            'mileages',
+            'availabilities',
+            'insurances',
+            'rules',
+            'deliveryOptions'
+        ]);
 
         return $this->successResponse([
             'cars' => CarResource::collection($cars),
