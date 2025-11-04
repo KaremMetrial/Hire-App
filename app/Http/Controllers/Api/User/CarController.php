@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\User;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\CarCollectionResource;
 use App\Http\Resources\CarResource;
 use App\Http\Resources\PaginationResource;
 use App\Models\Car;
@@ -37,23 +38,11 @@ class CarController extends Controller
             'extra_services_id',
             'rental_type'
         ]);
-        $cars = $this->carService->getAll($filters)->load([
-            'carModel.brand',
-            'fuel',
-            'transmission',
-            'category',
-            'rentalShop.vendors',
-            'city',
-            'images',
-            'prices',
-            'mileages',
-            'availabilities',
-            'insurances',
-            'rules',
-            'deliveryOptions'
-        ]);
+
+        $cars = $this->carService->getAll($filters);
+
         return $this->successResponse([
-            'cars' => CarResource::collection($cars),
+            'cars' => CarCollectionResource::collection($cars),
             'pagination' => new PaginationResource($cars),
         ], __('message.success'));
     }
@@ -101,21 +90,7 @@ class CarController extends Controller
             'sort_by' => 'sometimes|string|in:newest,latest,oldest,highest_price,price_desc,lowest_price,price_asc',
             'sort_order' => 'sometimes|string|in:asc,desc'
         ]);
-        $cars = $this->carService->getByRentalShop($rentalShopId, $filters)->load([
-            'carModel.brand',
-            'fuel',
-            'transmission',
-            'category',
-            'rentalShop.vendors',
-            'city',
-            'images',
-            'prices',
-            'mileages',
-            'availabilities',
-            'insurances',
-            'rules',
-            'deliveryOptions'
-        ]);
+        $cars = $this->carService->getByRentalShop($rentalShopId, $filters);
         return $this->successResponse([
             'cars' => CarResource::collection($cars),
             'pagination' => new PaginationResource($cars),

@@ -117,6 +117,14 @@ class Car extends Model
      */
     public function isAvailable(string $date): bool
     {
+        if ($this->relationLoaded('availabilities')) {
+            $isUnavailable = $this->availabilities->filter(function ($availability) use ($date) {
+                return $availability->unavailable_from && $availability->unavailable_to &&
+                       $availability->unavailable_from <= $date && $availability->unavailable_to >= $date;
+            })->isNotEmpty();
+            return !$isUnavailable;
+        }
+
         $isUnavailable = $this->availabilities()
             ->whereNotNull('unavailable_from')
             ->whereNotNull('unavailable_to')
@@ -198,6 +206,12 @@ class Car extends Model
      */
     public function canBeDelivered(): bool
     {
+        if ($this->relationLoaded('deliveryOptions')) {
+            return $this->deliveryOptions->filter(function ($option) {
+                return $option->is_active && $option->type === DeliveryOptionTypeEnum::CUSTOM;
+            })->isNotEmpty();
+        }
+
         return $this->deliveryOptions()
             ->where('is_active', true)
             ->where('type', DeliveryOptionTypeEnum::CUSTOM)

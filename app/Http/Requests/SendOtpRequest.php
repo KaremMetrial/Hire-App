@@ -24,7 +24,7 @@ class SendOtpRequest extends FormRequest
         return [
             'identifier' => 'required',
             'type' => 'required|in:user,vendor',
-            'purpose' => 'nullable|in:update-vendor-info,pre_registration',
+            'purpose' => 'nullable|in:update-vendor-info,pre_registration,forgot_password',
         ];
     }
 

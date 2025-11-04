@@ -39,4 +39,12 @@
 
             return $vendor;
         }
+
+        public function resetPassword($vendor, string $newPassword)
+        {
+            $vendor->password = Hash::make($newPassword);
+            $vendor->save();
+
+            return $vendor;
+        }
     }

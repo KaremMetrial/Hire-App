@@ -15,12 +15,31 @@ class CarRepository implements CarRepositoryInterface
 
     public function all(array $filters = []): LengthAwarePaginator
     {
-        $query = Car::with($this->getCarRelations())
+        $query = Car::with([
+            'carModel.translations',
+            'carModel.brand.translations',
+            'rentalShop:id,name,image,rating,count_rating',
+            'rentalShop.workingDays',
+            'prices',
+            'images',
+            'availabilities',
+            'deliveryOptions',
+            'carModel.brand',
+            'fuel',
+            'transmission',
+            'category',
+            'city',
+        ])
             ->whereIsActive(true);
 
-        // Apply filters & sorting via dedicated helpers for clarity and reuse
         $this->applyCarFilters($query, $filters);
-        $this->applyCarSorting($query, $filters);
+
+        // Apply location-based sorting if coordinates are provided
+        if (isset($filters['lat']) && isset($filters['lng'])) {
+            $this->applyLocationSorting($query, $filters['lat'], $filters['lng']);
+        } else {
+            $this->applyCarSorting($query, $filters);
+        }
 
         return $query->paginate($filters['per_page'] ?? self::PAGINATION_LIMIT);
     }
@@ -214,7 +233,25 @@ class CarRepository implements CarRepositoryInterface
 
     public function getByRentalShop(int $rentalShopId, array $filters = []): LengthAwarePaginator
     {
-        $query = Car::with($this->getCarRelations())
+        $query = Car::with([
+            'carModel.translations',
+            'fuel.translations',
+            'transmission.translations',
+            'rentalShop',
+            'images',
+            'prices',
+            'mileages',
+            'availabilities',
+            'deliveryOptions',
+            'carModel.brand',
+            'fuel',
+            'transmission',
+            'category',
+            'rentalShop.vendors',
+            'city',
+            'insurances',
+            'rules',
+        ])
             ->where('rental_shop_id', $rentalShopId)
             ->whereIsActive(true);
         $this->applyCarFilters($query, $filters);
@@ -232,16 +269,20 @@ class CarRepository implements CarRepositoryInterface
             'carModel.translations',
             'fuel.translations',
             'transmission.translations',
-            'category.translations',
             'rentalShop',
-            'city.translations',
             'images',
             'prices',
             'mileages',
             'availabilities',
-            'insurances.translations',
             'deliveryOptions',
-            'rules'
+            'carModel.brand',
+            'fuel',
+            'transmission',
+            'category',
+            'rentalShop.vendors',
+            'city',
+            'insurances',
+            'rules',
         ];
     }
 
@@ -250,45 +291,41 @@ class CarRepository implements CarRepositoryInterface
      */
     private function applyCarFilters(Builder $query, array $filters): void
     {
-        foreach ($this->getCarFilters() as $filter) {
+        $filterMappings = [
+            'model_id' => fn($value) => $query->where('model_id', $value),
+            'color' => fn($value) => $query->where('color', $value),
+            'year_from' => fn($value) => $query->where('year_of_manufacture', '>=', $value),
+            'year_to' => fn($value) => $query->where('year_of_manufacture', '<=', $value),
+            'fuel_id' => fn($value) => $query->where('fuel_id', $value),
+            'transmission_id' => function($value) use ($query) {
+                $ids = (array) $value;
+                $query->whereIn('transmission_id', $ids);
+            },
+            'category_id' => fn($value) => $query->where('category_id', $value),
+            'city_id' => fn($value) => $query->where('city_id', $value),
+            'rental_shop_id' => function($value) use ($query) {
+                $ids = (array) $value;
+                $query->whereIn('rental_shop_id', $ids);
+            },
+            'brand_id' => function($value) use ($query) {
+                $ids = (array) $value;
+                $query->whereHas('carModel', fn($q) => $q->whereIn('brand_id', $ids));
+            },
+            'extra_services_id' => function($value) use ($query) {
+                $ids = (array) $value;
+                $query->whereHas('services', fn($q) => $q->whereIn('extra_service_id', $ids));
+            },
+            'rental_type' => function($value) use ($query) {
+                $types = (array) $value;
+                $query->whereHas('prices', fn($q) => $q->whereIn('duration_type', $types)->where('is_active', true));
+            },
+        ];
+
+        foreach ($filterMappings as $filter => $applyFilter) {
             $value = $filters[$filter] ?? null;
-
             if ($value !== null && $value !== '') {
-                match ($filter) {
-                    'model_id' => $query->where('model_id', $value),
-                    'color' => $query->where('color', $value),
-                    'year_from' => $query->where('year_of_manufacture', '>=', $value),
-                    'year_to' => $query->where('year_of_manufacture', '<=', $value),
-                    'fuel_id' => $query->where('fuel_id', $value),
-                    'transmission_id' => $query->where('transmission_id', $value),
-                    'category_id' => $query->where('category_id', $value),
-                    default => null
-                };
+                $applyFilter($value);
             }
-        }
-
-        // Additional filters not covered by the simple mapping
-        if (!empty($filters['city_id'])) {
-            $query->where('city_id', $filters['city_id']);
-        }
-
-        if (!empty($filters['rental_shop_id'])) {
-            $query->where('rental_shop_id', $filters['rental_shop_id']);
-        }
-
-        if (!empty($filters['extra_services_id'])) {
-            $ids = (array) $filters['extra_services_id'];
-            $query->whereHas('services', function ($q) use ($ids) {
-                $q->whereIn('extra_service_id', $ids);
-            });
-        }
-
-        if (!empty($filters['rental_type'])) {
-            $type = $filters['rental_type'];
-            $query->whereHas('prices', function ($q) use ($type) {
-                $q->where('duration_type', $type)
-                    ->where('is_active', true);
-            });
         }
 
         // Handle price range filter
@@ -318,6 +355,19 @@ class CarRepository implements CarRepositoryInterface
     }
 
     /**
+     * Apply location-based sorting using latitude and longitude
+     */
+    private function applyLocationSorting(Builder $query, float $lat, float $lng): void
+    {
+        $query->selectRaw(
+            'cars.*, (6371 * acos(cos(radians(?)) * cos(radians(cities.lat)) * cos(radians(cities.lng) - radians(?)) + sin(radians(?)) * sin(radians(cities.lat)))) AS distance',
+            [$lat, $lng, $lat]
+        )
+        ->join('cities', 'cars.city_id', '=', 'cities.id')
+        ->orderBy('distance', 'asc');
+    }
+
+    /**
      * Apply sorting to car query
      */
     private function applyCarSorting(Builder $query, array $filters): void
@@ -338,26 +388,12 @@ class CarRepository implements CarRepositoryInterface
         if (isset($sortMapping[$sortBy])) {
             [$field, $direction] = $sortMapping[$sortBy];
             $query->orderBy($field, $direction);
-        } elseif (in_array($sortBy, ['rating', 'created_at', 'updated_at'])) {
+        } elseif (in_array($sortBy, ['rating', 'created_at', 'updated_at', 'city_id'])) {
             $query->orderBy($sortBy, $sortOrder);
         } else {
             $query->latest();
         }
     }
 
-    /**
-     * Get available car filters
-     */
-    private function getCarFilters(): array
-    {
-        return [
-            'model_id',
-            'color',
-            'year_from',
-            'year_to',
-            'fuel_id',
-            'transmission_id',
-            'category_id'
-        ];
-    }
+
 }

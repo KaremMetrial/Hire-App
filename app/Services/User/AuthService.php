@@ -121,4 +121,17 @@ class AuthService
             throw $e;
         }
     }
+
+    public function resetPassword($user, string $newPassword)
+    {
+        $user->password = Hash::make($newPassword);
+        $user->save();
+
+        Log::info('Password reset successful', [
+            'user_id' => $user->id,
+            'ip' => request()->ip(),
+        ]);
+
+        return $user;
+    }
 }

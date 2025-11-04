@@ -94,6 +94,9 @@ Route::prefix('v1')->group(function () {
     Route::controller(AuthController::class)->group(function () {
         Route::post('/register', 'register')->name('register');
         Route::post('/login', 'login')->name('login');
+        Route::post('/forgot-password', 'forgotPassword')->name('forgot-password');
+        Route::post('/verify-reset-otp', 'verifyResetOtp')->name('verify-reset-otp');
+        Route::post('/reset-password', 'resetPassword')->name('reset-password');
     })->middleware('guest');
 
     // Authintication Middleware

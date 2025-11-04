@@ -54,7 +54,7 @@ Route::prefix('v1')->group(function () {
     });
 
     // OTP
-    Route::prefix('otp')->controller(OtpController::class)->middleware('throttle:otp')->group(function () {
+    Route::prefix('otp')->controller(OtpController::class)->group(function () {
         Route::post('/send', 'sendOtp');
         Route::post('/verify', 'verifyOtp');
     });
@@ -66,6 +66,9 @@ Route::prefix('v1')->group(function () {
         Route::post('/resend-pre-register-otp', 'resendPreRegisterOtp')->name('resend-pre-register-otp');
 //        Route::post('/register', 'register')->name('register'); // Keep old endpoint for backward compatibility
         Route::post('/login', 'login')->name('login');
+        Route::post('/forgot-password', 'forgotPassword')->name('forgot-password');
+        Route::post('/verify-reset-otp', 'verifyResetOtp')->name('verify-reset-otp');
+        Route::post('/reset-password', 'resetPassword')->name('reset-password');
     });
 
     // Booking

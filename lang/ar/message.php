@@ -31,6 +31,7 @@
             'password_reset' => 'تم تغيير كلمة المرور بنجاح.',
             'pre_register_success' => 'تم التسجيل المسبق بنجاح.',
             'invalid_credentials' => 'بيانات الدخول غير صحيحة.',
+            'user_not_found' => 'المستخدم غير موجود.',
         ],
 
         // Working Day
@@ -44,4 +45,7 @@
         'registration.session_security_validation_failed' => 'فشل التحقق من أمان الجلسة. يرجى المحاولة مرة أخرى.',
         'registration.phone_already_in_pre_registration' => 'رقم الهاتف هذا موجود بالفعل في التسجيل المسبق.',
         'registration.email_already_in_pre_registration' => 'عنوان البريد الإلكتروني هذا موجود بالفعل في التسجيل المسبق.',
+
+        // Password Reset
+        'password_reset' => 'تم تغيير كلمة المرور بنجاح.',
     ];

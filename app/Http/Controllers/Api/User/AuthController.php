@@ -10,6 +10,8 @@ use App\Http\Requests\User\RegisterRequest;
 use App\Http\Requests\User\UpdateProfileRequest;
 use App\Http\Resources\User\RentalShopResourece;
 use App\Http\Resources\User\UserResourece;
+use App\Repositories\Interfaces\UserRepositoryInterface;
+use App\Services\OtpService;
 use App\Services\User\AuthService;
 use App\Services\User\RegistrationService;
 use App\Traits\ApiResponse;
@@ -23,11 +25,13 @@ class AuthController extends Controller
 
     protected AuthService $authService;
     protected RegistrationService $registrationService;
+    protected UserRepositoryInterface $userRepository;
 
-    public function __construct(AuthService $authService, RegistrationService $registrationService)
+    public function __construct(AuthService $authService, RegistrationService $registrationService, UserRepositoryInterface $userRepository)
     {
         $this->authService = $authService;
         $this->registrationService = $registrationService;
+        $this->userRepository = $userRepository;
     }
 
     /**
@@ -201,5 +205,71 @@ class AuthController extends Controller
         } catch (\Exception $e) {
             return $this->errorResponse(__('message.unexpected_error') . $e->getMessage());
         }
+    }
+
+    public function forgotPassword(Request $request)
+    {
+        $request->validate([
+            'identifier' => 'required',
+        ]);
+
+        $identifier = $request->identifier;
+        $field = filter_var($identifier, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
+        $user = $this->userRepository->findBy($field, $identifier);
+
+        if (!$user) {
+            return $this->errorResponse(__('message.auth.user_not_found'), 404);
+        }
+
+        // Send OTP for password reset
+        $otpService = app(OtpService::class);
+        $otpService->generateOtp($identifier, 'user', 'forgot_password');
+
+        return $this->successResponse(null, __('message.otp.sent'));
+    }
+
+    public function verifyResetOtp(Request $request)
+    {
+        $request->validate([
+            'identifier' => 'required',
+            'otp' => 'required',
+        ]);
+
+        $otpService = app(OtpService::class);
+        $verified = $otpService->verifyOtp($request->identifier, $request->otp, 'user', 'forgot_password');
+
+        if (!$verified) {
+            return $this->errorResponse(__('message.otp.invalid'), 422);
+        }
+
+        return $this->successResponse(null, __('message.otp.verified'));
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'identifier' => 'required',
+            'otp' => 'required',
+            'password' => 'required|min:8|confirmed',
+        ]);
+
+        $otpService = app(OtpService::class);
+        $verified = $otpService->verifyOtp($request->identifier, $request->otp, 'user', 'forgot_password');
+
+        if (!$verified) {
+            return $this->errorResponse(__('message.otp.invalid'), 422);
+        }
+
+        $identifier = $request->identifier;
+        $field = filter_var($identifier, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
+        $user = $this->userRepository->findBy($field, $identifier);
+
+        if (!$user) {
+            return $this->errorResponse(__('message.auth.user_not_found'), 404);
+        }
+
+        $this->authService->resetPassword($user, $request->password);
+
+        return $this->successResponse(null, __('message.password_reset'));
     }
 }

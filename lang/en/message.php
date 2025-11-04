@@ -30,6 +30,7 @@
             'password_reset' => 'Password reset successfully.',
             'pre_register_success' => 'Pre-registration successful.',
             'invalid_credentials' => 'Invalid credentials.',
+            'user_not_found' => 'User not found.',
         ],
 
         // Working Day
@@ -44,4 +45,6 @@
         'registration.phone_already_in_pre_registration' => 'This phone number is already in pre-registration.',
         'registration.email_already_in_pre_registration' => 'This email address is already in pre-registration.',
 
+        // Password Reset
+        'password_reset' => 'Password reset successfully.',
 ];
