@@ -196,6 +196,21 @@ class AuthController extends Controller
                 );
             }
         }
+
+        // Handle terms acceptance if provided
+        if ($request->has('accept_terms_version')) {
+            $termsVersion = $request->accept_terms_version;
+            $terms = \App\Models\TermsAndConditions::getByVersion($termsVersion);
+
+            if ($terms && !$user->acceptedTerms()->where('terms_and_conditions_id', $terms->id)->exists()) {
+                $user->acceptedTerms()->attach($terms->id, [
+                    'accepted_at' => now(),
+                    'ip_address' => $request->ip(),
+                    'user_agent' => $request->userAgent(),
+                ]);
+            }
+        }
+
         try {
             $user = $this->authService->updateProfile($user, $validated);
             $user->refresh();

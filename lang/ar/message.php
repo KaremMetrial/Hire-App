@@ -48,4 +48,50 @@
 
         // Password Reset
         'password_reset' => 'تم تغيير كلمة المرور بنجاح.',
+
+        // Booking Status Notifications
+        'booking_status_notification' => [
+            'subject_user' => 'تم تحديث حالة الحجز #:booking_number الخاص بك',
+            'subject_vendor' => 'تم تحديث حالة الحجز #:booking_number',
+            'greeting' => 'مرحباً :name!',
+            'status_changed' => 'تم تحديث حالة الحجز الخاص بك من :old_status إلى :new_status.',
+            'vendor_status_changed' => 'تم تغيير حالة الحجز من :old_status إلى :new_status.',
+            'booking_details' => 'تفاصيل الحجز:',
+            'car' => 'السيارة: :car_name',
+            'pickup_date' => 'تاريخ الاستلام: :pickup_date',
+            'return_date' => 'تاريخ الإرجاع: :return_date',
+            'view_booking' => 'عرض الحجز',
+            'view_booking_details' => 'عرض تفاصيل الحجز',
+            'thank_you' => 'شكراً لاستخدامك خدماتنا!',
+        ],
+
+        // Notifications
+        'notifications' => [
+            'marked_all_as_read' => 'تم تحديد جميع الإشعارات كمقروءة',
+            'deleted' => 'تم حذف الإشعار بنجاح',
+            'default_message' => 'لديك إشعار جديد',
+            'booking_status' => [
+                'user_updated' => 'تم تحديث حالة الحجز #:booking_number من :old_status إلى :new_status',
+                'vendor_updated' => 'تم تغيير حالة الحجز #:booking_number من :old_status إلى :new_status',
+            ],
+            'booking_overdue' => 'حجزك #:booking_number متأخر',
+            'review_request' => 'يرجى ترك تقييم لحجزك #:booking_number',
+            'otp_sent' => 'تم إرسال رمز OTP إلى هاتفك',
+            'titles' => [
+                'booking_status_updated' => 'بانتظار مراجعة المكتب لتأكيد حالة السيارة. ستنتهي المراجعة خلال 24 ساعة تلقائيًا إذا لم يتم اتخاذ إجراء.',
+                'booking_overdue' => 'حجزك متأخر. يرجى إرجاع المركبة فوراً.',
+                'review_request' => 'يرجى مشاركة تجربتك من خلال ترك تقييم لحجزك الأخير.',
+                'otp_sent' => 'تم إرسال رمز OTP إلى رقم هاتفك.',
+                'default' => 'لديك إشعار جديد.',
+            ],
+            'descriptions' => [
+                'default' => 'لديك إشعار جديد.',
+                'booking_status' => [
+                    'user_updated' => 'تم تغيير حالة حجزك #:booking_number من :old_status إلى :new_status. يرجى التحقق من تفاصيل الحجز للمزيد من المعلومات.',
+                    'vendor_updated' => 'تم تحديث حالة الحجز #:booking_number من :old_status إلى :new_status. يرجى مراجعة تفاصيل الحجز.',
+                ],
+                'booking_overdue' => 'حجزك #:booking_number متأخر الآن. يرجى إرجاع المركبة في أقرب وقت ممكن لتجنب الرسوم الإضافية.',
+                'review_request' => 'نود أن نشكرك إذا كنت تستطيع مشاركة تجربتك من خلال ترك تقييم لحجزك الأخير #:booking_number.',
+            ],
+        ],
     ];

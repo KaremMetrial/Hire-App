@@ -33,5 +33,8 @@ class AppServiceProvider extends ServiceProvider
             $switch
                 ->locales(Config::get('translatable.locales'));
         });
+
+        // Set cancellation policy from database
+        Config::set('booking.cancellation_policy', \App\Models\Setting::getCancellationPolicyText());
     }
 }

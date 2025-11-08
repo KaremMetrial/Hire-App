@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Http\Resources\Vendor\AddressResourece;
 use App\Http\Resources\Vendor\RentalShopResourece;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -28,37 +29,37 @@ class CarResource extends JsonResource
         return [
             // Basic car information
             'id' => $this->id,
-            'title' => $title, // Combined brand, model, and year for clear identification
-            'year_of_manufacture' => $this->year_of_manufacture,
-            'color' => $this->color,
-            'license_plate' => $this->license_plate,
-            'num_of_seat' => (int) $this->num_of_seat,
+            'title' => $title,
+            'subtitle' => [
+                'transmission' => $this->transmission->name ?? null,
+                'fuel' => $this->fuel->name ?? null,
+                'category' => $this->category->name ?? null,
+                'num_of_seat' => (int) $this->num_of_seat,
+            ],
             'kilometers' => (int) $this->kilometers,
-            'is_active' => (bool) $this->is_active,
-
-            // Car specifications
-            'model' => new ModelResource($this->whenLoaded('carModel')),
-            'fuel' => new FuelResource($this->whenLoaded('fuel')),
-            'transmission' => new TransmissionResource($this->whenLoaded('transmission')),
-            'category' => new CategoryResource($this->whenLoaded('category')),
-
-            // Rental details
-            'rental_shop' => new RentalShopResourece($this->whenLoaded('rentalShop')),
-            'city' => new CityResource($this->whenLoaded('city')),
             'prices' => CarPriceResource::collection($this->whenLoaded('prices')),
+            'rental_shop' => $this->whenLoaded('rentalShop', function ($rentalShop) {
+                return [
+                    'id' => $rentalShop->id,
+                    'name' => $rentalShop->name,
+                    'image' => $rentalShop->image ? asset('storage/'.$rentalShop->image) : null,
+                    'is_active' => (bool) $rentalShop->is_active,
+                    'rating' => (int) $rentalShop->rating,
+                    'count_rating' => (int) $rentalShop->count_rating,
+                    'created_at' => $rentalShop->created_at->diffForHumans(),
+                    'address' => new AddressResourece($rentalShop->address),
+                ];
+            }),
+            'rules' => CarRuleResource::collection($this->whenLoaded('rules')),
+            'cancellation_policy' => config('booking.cancellation_policy'),
+            'is_active' => (bool) $this->is_active,
             'is_available' => (bool) $this->isAvailable(Carbon::now()),
             'can_be_delivered' => (bool) $this->canBeDelivered(),
-
-            // Additional features and options
             'images' => CarImageResource::collection($this->whenLoaded('images')),
             'mileages' => new CarMileageResource($this->whenLoaded('mileages')),
-            'availabilities' => CarAvailabilityResource::collection($this->whenLoaded('availabilities')),
             'insurances' => InsuranceResource::collection($this->whenLoaded('insurances')),
             'delivery_options' => DeliveryOptionResource::collection($this->whenLoaded('deliveryOptions')),
             'services' => ExtraServiceResource::collection($this->whenLoaded('services')),
-            'rules' => CarRuleResource::collection($this->whenLoaded('rules')),
-
-            // User-specific information
             'is_bookmarked' => $this->when($user, function () use ($user) {
                 if (!$user) {
                     return false;
@@ -68,8 +69,6 @@ class CarResource extends JsonResource
                 }
                 return $this->isBookmarkedBy($user->id);
             }),
-
-            // Customer types and documents (for rental shop)
             'customer_types' => $this->whenLoaded('rentalShop', function () {
                 if (!$this->rentalShop) {
                     return [];

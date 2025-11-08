@@ -47,4 +47,50 @@
 
         // Password Reset
         'password_reset' => 'Password reset successfully.',
+
+        // Booking Status Notifications
+        'booking_status_notification' => [
+            'subject_user' => 'Your Booking #:booking_number Status Updated',
+            'subject_vendor' => 'Booking #:booking_number Status Updated',
+            'greeting' => 'Hello :name!',
+            'status_changed' => 'Your booking status has been updated from :old_status to :new_status.',
+            'vendor_status_changed' => 'Booking status changed from :old_status to :new_status.',
+            'booking_details' => 'Booking Details:',
+            'car' => 'Car: :car_name',
+            'pickup_date' => 'Pickup Date: :pickup_date',
+            'return_date' => 'Return Date: :return_date',
+            'view_booking' => 'View Booking',
+            'view_booking_details' => 'View Booking Details',
+            'thank_you' => 'Thank you for using our service!',
+        ],
+
+        // Notifications
+        'notifications' => [
+            'marked_all_as_read' => 'All notifications marked as read',
+            'deleted' => 'Notification deleted successfully',
+            'default_message' => 'You have a new notification',
+            'booking_status' => [
+                'user_updated' => 'Your booking #:booking_number status has been updated from :old_status to :new_status',
+                'vendor_updated' => 'Booking #:booking_number status changed from :old_status to :new_status',
+            ],
+            'booking_overdue' => 'Your booking #:booking_number is overdue',
+            'review_request' => 'Please leave a review for your booking #:booking_number',
+            'otp_sent' => 'OTP code has been sent to your phone',
+            'titles' => [
+                'booking_status_updated' => 'Waiting for office review to confirm car status. Review will end automatically within 24 hours if no action is taken.',
+                'booking_overdue' => 'Your booking is overdue. Please return the vehicle immediately.',
+                'review_request' => 'Please share your experience by leaving a review for your recent booking.',
+                'otp_sent' => 'OTP code has been sent to your phone number.',
+                'default' => 'You have a new notification.',
+            ],
+            'descriptions' => [
+                'default' => 'You have a new notification.',
+                'booking_status' => [
+                    'user_updated' => 'Your booking #:booking_number has changed status from :old_status to :new_status. Please check your booking details for more information.',
+                    'vendor_updated' => 'Booking #:booking_number status has been updated from :old_status to :new_status. Please review the booking details.',
+                ],
+                'booking_overdue' => 'Your booking #:booking_number is now overdue. Please return the vehicle as soon as possible to avoid additional charges.',
+                'review_request' => 'We would appreciate it if you could share your experience by leaving a review for your recent booking #:booking_number.',
+            ],
+        ],
 ];

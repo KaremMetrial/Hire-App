@@ -1,4 +1,4 @@
-<?php
+ <?php
 
 use App\Http\Controllers\Api\BrandController;
 use App\Http\Controllers\Api\CarController;
@@ -91,13 +91,17 @@ Route::prefix('v1')->group(function () {
     });
 
     // Auth
-    Route::controller(AuthController::class)->group(function () {
+    Route::controller(AuthController::class)->middleware('guest')->group(function () {
+        Route::post('/pre-register', 'preRegister')->name('pre-register');
+        Route::post('/complete-registration', 'completeRegistration')->name('complete-registration');
+        Route::post('/resend-pre-register-otp', 'resendPreRegisterOtp')->name('resend-pre-register-otp');
         Route::post('/register', 'register')->name('register');
         Route::post('/login', 'login')->name('login');
         Route::post('/forgot-password', 'forgotPassword')->name('forgot-password');
+        Route::post('/resend-forgot-password-otp', 'resendForgotPasswordOtp')->name('resend-forgot-password-otp');
         Route::post('/verify-reset-otp', 'verifyResetOtp')->name('verify-reset-otp');
         Route::post('/reset-password', 'resetPassword')->name('reset-password');
-    })->middleware('guest');
+    });
 
     // Authintication Middleware
     Route::middleware('auth:vendor')->group(function () {
@@ -125,6 +129,8 @@ Route::prefix('v1')->group(function () {
         // Auth
         Route::controller(AuthController::class)->group(function () {
             Route::post('/logout', 'logout');
+            Route::get('/me', 'me');
+            Route::put('/update-profile', 'updateProfile');
         });
 
         // Document

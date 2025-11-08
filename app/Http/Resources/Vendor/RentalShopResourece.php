@@ -26,6 +26,9 @@ class RentalShopResourece extends JsonResource
             'rejected_reason' => $this->rejected_reason,
             'rating' => (int) $this->rating,
             'count_rating' => (int) $this->count_rating,
+            'facebook_link' => $this->facebook_link,
+            'instagram_link' => $this->instagram_link,
+            'whatsapp_link' => $this->whatsapp_link,
             'address' => new AddressResourece($this->whenLoaded('address')),
             'working_days' => WorkingDayResource::collection($this->workingDays),
         ];

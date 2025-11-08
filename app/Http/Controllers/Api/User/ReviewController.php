@@ -96,9 +96,19 @@ class ReviewController extends Controller
     {
         try {
             $reviews = $this->autoReviewService->getRentalShopReviews($rentalShopId, request('per_page', 15));
-
+            $data = $reviews->map(function ($review) {
+                return [
+                    'id' => $review->id,
+                    'rental_shop_name' => $review->booking->rentalShop->name,
+                    'rating' => $review->rating,
+                    'user_name' => $review->user->name,
+                    'user_avatar' => $review->user->avatar ? asset('storage/' . $review->user->avatar) : null,
+                    'comment' => $review->comment,
+                    'created_at' => $review->created_at->diffForHumans(),
+                ];
+            });
             return $this->successResponse([
-                'reviews' => $reviews->items(),
+                'reviews' => $data,
                 'pagination' => new PaginationResource($reviews),
             ], 'Rental shop reviews retrieved successfully');
         } catch (\Exception $e) {

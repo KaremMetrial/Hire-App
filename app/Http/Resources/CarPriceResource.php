@@ -13,7 +13,8 @@ class CarPriceResource extends JsonResource
 
         return [
             'id' => $this->id,
-            'duration_type' => $this->duration_type,
+            'duration_type' => $this->duration_type->value,
+            'duration_type_label' => $this->duration_type->label(),
             'price' => $this->price,
             'discounted_price' => $this->discounted_price,
             'discount_start_at' => optional($this->discount_start_at)->toISOString(),

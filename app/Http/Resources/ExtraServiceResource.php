@@ -14,6 +14,7 @@ class ExtraServiceResource extends JsonResource
             'name' => $this->name,
             'description' => $this->description,
             'is_active' => $this->is_active,
+            'price' => $this->pivot->price ?? null,
         ];
     }
 }

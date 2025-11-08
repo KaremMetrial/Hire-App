@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\User\BookmarkController;
 use App\Http\Controllers\Api\User\CarController;
 use App\Http\Controllers\Api\User\RentalShopController;
 use App\Http\Controllers\Api\User\ReviewController;
+use App\Http\Controllers\Api\Vendor\AuthController as VendorAuthController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('v1')->group(function () {
@@ -95,6 +96,13 @@ Route::prefix('v1')->group(function () {
         Route::get('/{id}', 'show');
     });
 
+    // Terms and Conditions (Public Access)
+    Route::prefix('terms-and-conditions')->controller(\App\Http\Controllers\Api\TermsAndConditionsController::class)->group(function () {
+        Route::get('/current', 'current');
+        Route::get('/', 'index');
+        Route::get('/{version}', 'show');
+    });
+
     // Authintication Middleware
     Route::middleware('auth:user')->group(function () {
         // Auth
@@ -133,6 +141,24 @@ Route::prefix('v1')->group(function () {
             Route::get('/check/{car}', 'check');
             Route::delete('/{car}', 'remove');
             Route::get('/count/{car}', 'count');
+        });
+
+        // Reviews
+        Route::prefix('reviews')->controller(ReviewController::class)->group(function () {
+            Route::post('/submit/{bookingId}', 'submit');
+            Route::post('/submit-with-token/{token}', 'submitWithToken');
+            Route::get('/pending', 'pending');
+            Route::get('/statistics', 'statistics');
+        });
+
+        // Notifications
+        Route::prefix('notifications')->controller(\App\Http\Controllers\Api\User\NotificationController::class)->group(function () {
+            Route::get('/', 'index');
+            Route::get('/stats', 'stats');
+            Route::get('/{id}', 'show');
+            Route::put('/{id}/read', 'markAsRead');
+            Route::put('/mark-all-read', 'markAllAsRead');
+            Route::delete('/{id}', 'destroy');
         });
     });
 });

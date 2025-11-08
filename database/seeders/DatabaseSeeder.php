@@ -44,9 +44,12 @@ class DatabaseSeeder extends Seeder
 
             // Booking Data
             BookingSeeder::class,
+            BookingStatusNotificationSeeder::class,
 
             // Supporting Data
             NotificationSettingSeeder::class,
+            SettingSeeder::class,
+            TermsAndConditionsSeeder::class,
         ]);
     }
 }

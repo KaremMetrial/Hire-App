@@ -23,6 +23,7 @@
                 'status' => $this->status?->label(),
                 'is_active' => (bool)$this->is_active,
                 'created_at' => $this->created_at,
+                'role' => $this->rentalShops()->first()?->pivot->role,
             ];
         }
     }

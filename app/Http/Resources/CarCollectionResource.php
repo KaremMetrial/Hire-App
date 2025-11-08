@@ -21,13 +21,23 @@ class CarCollectionResource extends JsonResource
         return [
             'id' => $this->id,
             'title' => $title,
-            'kilometers' => (int) $this->kilometers,
-            'is_active' => (bool) $this->is_active,
+            'kilometers' => (int)$this->kilometers,
+            'is_active' => (bool)$this->is_active,
 
-            'rental_shop' => new RentalShopResourece($this->whenLoaded('rentalShop')),
+//            'rental_shop' => new RentalShopResourece($this->whenLoaded('rentalShop')),
+            'rental_shop' => $this->whenLoaded('rentalShop', function ($rentalShop) {
+                return [
+                    'id' => $rentalShop->id,
+                    'name' => $rentalShop->name,
+                    'image' => $rentalShop->image ? asset('storage/' . $rentalShop->image) : null,
+                    'is_active' => (bool)$rentalShop->is_active,
+                    'rating' => (int)$rentalShop->rating,
+                    'count_rating' => (int)$rentalShop->count_rating,
+                ];
+            }),
             'prices' => CarPriceResource::collection($this->whenLoaded('prices')),
-            'is_available' => (bool) $this->isAvailable(Carbon::now()),
-            'can_be_delivered' => (bool) $this->canBeDelivered(),
+            'is_available' => (bool)$this->isAvailable(Carbon::now()),
+            'can_be_delivered' => (bool)$this->canBeDelivered(),
 
             'images' => CarImageResource::collection($this->whenLoaded('images')),
         ];

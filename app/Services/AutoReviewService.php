@@ -90,6 +90,12 @@ class AutoReviewService
                 self::REVIEW_EXPIRY_DAYS * 24 * 60 // 30 days in minutes
             );
 
+            // Store token in booking token list for cleanup
+            $tokenListKey = "booking_tokens_{$booking->id}";
+            $existingTokens = cache()->get($tokenListKey, []);
+            $existingTokens[] = $reviewToken;
+            cache()->put($tokenListKey, $existingTokens, self::REVIEW_EXPIRY_DAYS * 24 * 60);
+
             // Send notification (you need to create this notification class)
             if (class_exists(ReviewRequestNotification::class)) {
                 $user->notify(new ReviewRequestNotification($booking, $reviewToken));
@@ -175,7 +181,7 @@ class AutoReviewService
      */
     private function validateReviewData(array $reviewData): void
     {
-        $validator = \Validator::make($reviewData, [
+        $validator = validator($reviewData, [
             'rating' => 'required|integer|min:1|max:5',
             'cleanliness_rating' => 'nullable|integer|min:1|max:5',
             'service_rating' => 'nullable|integer|min:1|max:5',
@@ -243,14 +249,17 @@ class AutoReviewService
      */
     private function cleanupReviewTokens(int $bookingId): void
     {
-        $keys = cache()->getMatchingKeys("review_token_*");
+        // Since getMatchingKeys() is not available in all cache drivers,
+        // we'll store a list of tokens per booking for cleanup
+        $tokenListKey = "booking_tokens_{$bookingId}";
+        $tokens = cache()->get($tokenListKey, []);
 
-        foreach ($keys as $key) {
-            $tokenData = cache()->get($key);
-            if ($tokenData && $tokenData['booking_id'] === $bookingId) {
-                cache()->forget($key);
-            }
+        foreach ($tokens as $token) {
+            cache()->forget("review_token_{$token}");
         }
+
+        // Clean up the token list
+        cache()->forget($tokenListKey);
     }
 
     /**

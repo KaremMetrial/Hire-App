@@ -37,6 +37,17 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Cancellation Policy Text
+    |--------------------------------------------------------------------------
+    |
+    | Localized cancellation policy text that can be managed by admin.
+    | This is set dynamically in AppServiceProvider.
+    |
+    */
+    'cancellation_policy' => [],
+
+    /*
+    |--------------------------------------------------------------------------
     | Mileage Settings
     |--------------------------------------------------------------------------
     |

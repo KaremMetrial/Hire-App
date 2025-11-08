@@ -18,6 +18,7 @@ return [
         'car_info' => 'معلومات السيارة',
         'customer_type_info' => 'معلومات نوع العميل',
         'document_info' => 'معلومات المستند',
+        'terms_info' => 'معلومات الشروط',
         'booking_basic_info' => 'معلومات الحجز الأساسية',
         'dates_locations' => 'التواريخ والمواقع',
         'costs' => 'التكاليف',
@@ -156,7 +157,14 @@ return [
         'email' => 'البريد الإلكتروني',
         'phone' => 'رقم الهاتف',
         'rejected_reason' => 'سبب الرفض',
-
+        'key' => 'المفتاح',
+        'value' => 'القيمة',
+        'language_code' => 'رمز اللغة',
+        'text' => 'النص',
+        'version' => 'الإصدار',
+        'content' => 'المحتوى',
+        'effective_date' => 'تاريخ السريان',
+        'is_required_agreement' => 'موافقة مطلوبة',
     ],
     'navigation' => [
         'settings' => 'الإعدادات',
@@ -237,6 +245,14 @@ return [
         'booking' => [
             'label' => 'حجز',
             'plural' => 'الحجوزات',
+        ],
+        'setting' => [
+            'label' => 'إعداد',
+            'plural' => 'الإعدادات',
+        ],
+        'terms_and_conditions' => [
+            'label' => 'الشروط والأحكام',
+            'plural' => 'الشروط والأحكام',
         ],
     ],
     'labels' => [

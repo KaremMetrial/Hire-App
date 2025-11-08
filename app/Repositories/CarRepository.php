@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Storage;
 
 class CarRepository implements CarRepositoryInterface
 {
-    const PAGINATION_LIMIT = 15;
+    const PAGINATION_LIMIT = 5;
 
     public function all(array $filters = []): LengthAwarePaginator
     {
@@ -214,18 +214,18 @@ class CarRepository implements CarRepositoryInterface
     public function findById(int $id): ?Car
     {
         return Car::with([
-            'carModel',
-            'fuel',
-            'transmission',
-            'category',
+            'carModel.translation',
+            'fuel.translation',
+            'transmission.translation',
+            'category.translation',
             'rentalShop.address',
             'rentalShop.workingDays',
-            'city',
+            'city.translation',
             'images',
             'prices',
             'mileages',
             'availabilities',
-            'insurances',
+            'insurances.translation',
             'deliveryOptions',
             'services'
         ])->find($id);

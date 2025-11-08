@@ -12,6 +12,7 @@ use App\Http\Requests\User\SubmitPickupProcedureRequest;
 use App\Http\Requests\User\SubmitReturnProcedureRequest;
 use App\Http\Requests\User\SubmitAccidentReportRequest;
 use App\Http\Requests\User\RequestExtensionRequest;
+use App\Http\Resources\BookingCollectionResource;
 use App\Http\Resources\BookingProcedureResource;
 use App\Http\Resources\BookingResource;
 use App\Http\Resources\BookingAccidentReportResource;
@@ -94,7 +95,7 @@ class BookingController extends Controller
             $statuses,
         );
         return $this->successResponse([
-            'bookings' => BookingResource::collection($bookings->load('accidentReport')),
+            'bookings' => BookingCollectionResource::collection($bookings->load('accidentReport')),
             'pagination' => new PaginationResource($bookings),
         ], 'message.success');
     }

@@ -18,6 +18,7 @@ return [
         'car_info' => 'Car Information',
         'customer_type_info' => 'Customer Type Info',
         'document_info' => 'Document Info',
+        'terms_info' => 'Terms Info',
         'booking_basic_info' => 'Booking basic info',
         'dates_locations' => 'Dates & locations',
         'costs' => 'Costs',
@@ -155,6 +156,14 @@ return [
         'email' => 'Email',
         'phone' => 'Phone',
         'rejected_reason' => 'Rejection reason',
+        'key' => 'Key',
+        'value' => 'Value',
+        'language_code' => 'Language Code',
+        'text' => 'Text',
+        'version' => 'Version',
+        'content' => 'Content',
+        'effective_date' => 'Effective Date',
+        'is_required_agreement' => 'Required Agreement',
     ],
     'navigation' => [
         'settings' => 'Settings',
@@ -236,6 +245,14 @@ return [
         'booking' => [
             'label' => 'Booking',
             'plural' => 'Bookings',
+        ],
+        'setting' => [
+            'label' => 'Setting',
+            'plural' => 'Settings',
+        ],
+        'terms_and_conditions' => [
+            'label' => 'Terms and Conditions',
+            'plural' => 'Terms and Conditions',
         ],
     ],
     'labels' => [
