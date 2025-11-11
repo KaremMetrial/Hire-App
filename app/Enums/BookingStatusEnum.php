@@ -5,6 +5,7 @@ namespace App\Enums;
 enum BookingStatusEnum: string
 {
     case Pending = 'pending';
+    case UnderReview = 'under_review';
     case Confirmed = 'confirmed';
     case Active = 'active';
     case UnderDelivery = 'under_delivery';
@@ -16,6 +17,7 @@ enum BookingStatusEnum: string
     case ExtensionRequested = 'extension_requested';
     case UnreasonableDelay = 'unreasonable_delay';
     case UnderDispute = 'under_dispute';
+    case DisputeOpened = 'dispute_opened';
 
     public static function values(): array
     {
@@ -26,6 +28,7 @@ enum BookingStatusEnum: string
     {
         return match ($this) {
             self::Pending => __('enums.booking_status.pending'),
+            self::UnderReview => __('enums.booking_status.under_review'),
             self::Confirmed => __('enums.booking_status.confirmed'),
             self::Active => __('enums.booking_status.active'),
             self::UnderDelivery => __('enums.booking_status.under_delivery'),
@@ -37,6 +40,7 @@ enum BookingStatusEnum: string
             self::ExtensionRequested => __('enums.booking_status.extension_requested'),
             self::UnreasonableDelay => __('enums.booking_status.unreasonable_delay'),
             self::UnderDispute => __('enums.booking_status.under_dispute'),
+            self::DisputeOpened => __('enums.booking_status.dispute_opened'),
         };
     }
 }

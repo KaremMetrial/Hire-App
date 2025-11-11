@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Car;
+use App\Models\ExtraService;
 use App\Repositories\Interfaces\CarRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -92,12 +93,19 @@ class CarRepository implements CarRepositoryInterface
 
             // 8. Create Custom Extra Services
             if (isset($data['custom_extra_services'])) {
-                $car->services()->createMany($data['custom_extra_services']);
+                foreach ($data['custom_extra_services'] as $customService) {
+                    ExtraService::create($customService + ['is_active' => true]);
+                }
             }
 
             // 9. Create Delivery Options
             if (isset($data['delivery_options'])) {
                 $car->deliveryOptions()->createMany($data['delivery_options']);
+            }
+
+            // 10. Create Car Rules
+            if (isset($data['rules'])) {
+                $car->rules()->createMany($data['rules']);
             }
 
             return $car;
@@ -187,8 +195,12 @@ class CarRepository implements CarRepositoryInterface
 
             // 8. Sync Custom Extra Services
             if (isset($data['custom_extra_services'])) {
-                $car->services()->delete();
-                $car->services()->createMany($data['custom_extra_services']);
+                // Delete only custom services (those without extra_service_id)
+                $car->services()->whereNull('extra_service_id')->delete();
+                foreach ($data['custom_extra_services'] as $customService) {
+                    $extraService = ExtraService::create($customService + ['is_active' => true]);
+                    $car->services()->attach($extraService->id, ['price' => $customService['price']]);
+                }
             }
 
             // 9. Sync Delivery Options
@@ -197,9 +209,10 @@ class CarRepository implements CarRepositoryInterface
                 $car->deliveryOptions()->createMany($data['delivery_options']);
             }
 
-            // 10. Update Rental Shop Rule
-            if (isset($data['rental_shop_rule'])) {
-                $car->update(['rental_shop_rule' => $data['rental_shop_rule']]);
+            // 10. Sync Car Rules
+            if (isset($data['rules'])) {
+                $car->rules()->delete();
+                $car->rules()->createMany($data['rules']);
             }
 
             return $car->fresh();

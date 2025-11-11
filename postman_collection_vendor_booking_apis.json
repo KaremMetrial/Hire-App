@@ -1,0 +1,707 @@
+{
+  "info": {
+    "name": "Vendor Booking APIs",
+    "description": "Postman collection for vendor booking management APIs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{vendor_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api/v1"
+    },
+    {
+      "key": "vendor_token",
+      "value": ""
+    },
+    {
+      "key": "booking_id",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Vendor Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"vendor@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "login"
+              ]
+            },
+            "description": "Login as vendor to get authentication token"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('vendor_token', response.data.token);",
+                  "    console.log('Token saved:', response.data.token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Booking Management",
+      "item": [
+        {
+          "name": "Get All Bookings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/bookings?type=current&per_page=10",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "bookings"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "current",
+                  "description": "Filter by booking type: current or completed"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10",
+                  "description": "Number of bookings per page"
+                }
+              ]
+            },
+            "description": "Get all bookings for the authenticated vendor"
+          }
+        },
+        {
+          "name": "Get Specific Booking",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/bookings/{{booking_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "bookings",
+                "{{booking_id}}"
+              ]
+            },
+            "description": "Get details of a specific booking"
+          }
+        },
+        {
+          "name": "Confirm Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/bookings/{{booking_id}}/confirm",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "bookings",
+                "{{booking_id}}",
+                "confirm"
+              ]
+            },
+            "description": "Confirm a pending booking"
+          }
+        },
+        {
+          "name": "Reject Booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rejection_reason\": \"Car not available\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/bookings/{{booking_id}}/reject",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "bookings",
+                "{{booking_id}}",
+                "reject"
+              ]
+            },
+            "description": "Reject a pending booking with reason"
+          }
+        },
+        {
+          "name": "Request Additional Info",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"information_requests\": [\n    {\n      \"field\": \"license_number\",\n      \"is_required\": true,\n      \"notes\": \"Please provide your driving license number\"\n    },\n    {\n      \"field\": \"driving_experience_years\",\n      \"is_required\": false,\n      \"notes\": \"How many years of driving experience do you have?\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/bookings/{{booking_id}}/request-info",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "bookings",
+                "{{booking_id}}",
+                "request-info"
+              ]
+            },
+            "description": "Request additional information from customer"
+          }
+        },
+        {
+          "name": "Start Booking (Pickup)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pickup_mileage\": 15000\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/bookings/{{booking_id}}/start",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "bookings",
+                "{{booking_id}}",
+                "start"
+              ]
+            },
+            "description": "Start booking by recording pickup mileage"
+          }
+        },
+        {
+          "name": "Complete Booking (Return)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"return_mileage\": 15200\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/bookings/{{booking_id}}/complete",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "bookings",
+                "{{booking_id}}",
+                "complete"
+              ]
+            },
+            "description": "Complete booking by recording return mileage"
+          }
+        },
+        {
+          "name": "Confirm Pickup Procedure",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Pickup procedure confirmed by vendor\",\n  \"confirmed\": true,\n  \"pickup_mileage\": 15000,\n  \"images\": []\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/bookings/{{booking_id}}/confirm-pickup-procedure",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "bookings",
+                "{{booking_id}}",
+                "confirm-pickup-procedure"
+              ]
+            },
+            "description": "Confirm pickup procedure submitted by customer"
+          }
+        },
+        {
+          "name": "Confirm Return Procedure",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Return procedure confirmed by vendor\",\n  \"return_mileage\": 15200,\n  \"images\": []\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/bookings/{{booking_id}}/confirm-return-procedure",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "bookings",
+                "{{booking_id}}",
+                "confirm-return-procedure"
+              ]
+            },
+            "description": "Confirm return procedure submitted by customer"
+          }
+        },
+        {
+          "name": "Approve Extension",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/bookings/{{booking_id}}/approve-extension",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "bookings",
+                "{{booking_id}}",
+                "approve-extension"
+              ]
+            },
+            "description": "Approve extension request from customer"
+          }
+        },
+        {
+          "name": "Reject Extension",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/bookings/{{booking_id}}/reject-extension",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "bookings",
+                "{{booking_id}}",
+                "reject-extension"
+              ]
+            },
+            "description": "Reject extension request from customer"
+          }
+        },
+        {
+          "name": "Move to Under Review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/bookings/{{booking_id}}/move-to-under-review",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "bookings",
+                "{{booking_id}}",
+                "move-to-under-review"
+              ]
+            },
+            "description": "Move booking to under review status"
+          }
+        },
+        {
+          "name": "Open Dispute",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dispute_reason\": \"Customer reported damage not found during inspection\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/bookings/{{booking_id}}/open-dispute",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "bookings",
+                "{{booking_id}}",
+                "open-dispute"
+              ]
+            },
+            "description": "Open a dispute for the booking"
+          }
+        },
+        {
+          "name": "Move Under Dispute",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"dispute_reason\": \"Extra charges disputed by customer\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/bookings/{{booking_id}}/move-under-dispute",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "bookings",
+                "{{booking_id}}",
+                "move-under-dispute"
+              ]
+            },
+            "description": "Move booking under dispute status"
+          }
+        },
+        {
+          "name": "Get Booking Procedures",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/bookings/{{booking_id}}/procedures?type=pickup",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "bookings",
+                "{{booking_id}}",
+                "procedures"
+              ],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "pickup",
+                  "description": "Filter by procedure type: pickup or return"
+                }
+              ]
+            },
+            "description": "Get booking procedures (pickup/return)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Statistics & Reports",
+      "item": [
+        {
+          "name": "Get Booking Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/bookings/stats",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "bookings",
+                "stats"
+              ]
+            },
+            "description": "Get booking statistics for the vendor"
+          }
+        },
+        {
+          "name": "Get Upcoming Bookings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/bookings/upcoming",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "bookings",
+                "upcoming"
+              ]
+            },
+            "description": "Get upcoming bookings for the next 7 days"
+          }
+        },
+        {
+          "name": "Get Today's Bookings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/bookings/today",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "bookings",
+                "today"
+              ]
+            },
+            "description": "Get today's bookings (pickup/return)"
+          }
+        },
+        {
+          "name": "Get Active Bookings",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/bookings/active",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "bookings",
+                "active"
+              ]
+            },
+            "description": "Get currently active bookings"
+          }
+        },
+        {
+          "name": "Get Booking Calendar",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/bookings/calendar?start_date=2024-01-01&end_date=2024-01-31",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "bookings",
+                "calendar"
+              ],
+              "query": [
+                {
+                  "key": "start_date",
+                  "value": "2024-01-01",
+                  "description": "Start date for calendar view"
+                },
+                {
+                  "key": "end_date",
+                  "value": "2024-01-31",
+                  "description": "End date for calendar view"
+                }
+              ]
+            },
+            "description": "Get booking calendar data for a date range"
+          }
+        },
+        {
+          "name": "Get Booking Status Logs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/bookings/{{booking_id}}/status-logs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "bookings",
+                "{{booking_id}}",
+                "status-logs"
+              ]
+            },
+            "description": "Get status change logs for a booking"
+          }
+        },
+        {
+          "name": "Get Remaining Acceptance Time",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/bookings/{{booking_id}}/remaining-acceptance-time",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "bookings",
+                "{{booking_id}}",
+                "remaining-acceptance-time"
+              ]
+            },
+            "description": "Get remaining time for vendor to accept/reject booking"
+          }
+        }
+      ]
+    }
+  ]
+}

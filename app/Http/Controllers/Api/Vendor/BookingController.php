@@ -34,10 +34,22 @@ class BookingController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        $status = $request->get('status');
+        $type = $request->get('type'); // 'current' or 'completed'
         try {
+
+            $statuses = null;
+            if ($type === 'current') {
+                $statuses = ['pending', 'under_review', 'confirmed', 'active', 'info_requested', 'under_delivery', 'accident_reported', 'extension_requested', 'unreasonable_delay', 'under_dispute', 'dispute_opened'];
+            } elseif ($type === 'completed') {
+                $statuses = ['completed', 'cancelled', 'rejected'];
+            } elseif ($status) {
+                $statuses = [$status];
+            }
+
             $bookings = $this->bookingService->getVendorBookings(
                 auth()->id(),
-                $request->get('status'),
+                $statuses,
                 $request->get('per_page', 15)
             );
 
@@ -192,7 +204,7 @@ class BookingController extends Controller
         try {
             $bookings = $this->bookingService->getVendorBookings(
                 auth()->id(),
-                'active',
+                ['active'],
                 50
             );
 
@@ -410,12 +422,61 @@ class BookingController extends Controller
     }
 
     /**
+     * Move booking to under review
+     */
+    public function moveToUnderReview(int $id): JsonResponse
+    {
+        try {
+            $booking = $this->bookingService->moveToUnderReview($id, auth()->id());
+
+            return $this->successResponse([
+                'booking' => new BookingResource($booking),
+            ], 'Booking moved to under review successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Open dispute for booking
+     */
+    public function openDispute(int $id, Request $request): JsonResponse
+    {
+        try {
+            $booking = $this->bookingService->openDispute($id, auth()->id(), $request->get('dispute_reason'));
+
+            return $this->successResponse([
+                'booking' => new BookingResource($booking),
+            ], 'Dispute opened successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
+     * Move booking under dispute
+     */
+    public function moveUnderDispute(int $id, Request $request): JsonResponse
+    {
+        try {
+            $booking = $this->bookingService->moveUnderDispute($id, auth()->id(), $request->get('dispute_reason'));
+
+            return $this->successResponse([
+                'booking' => new BookingResource($booking),
+            ], 'Booking moved under dispute successfully');
+        } catch (Exception $e) {
+            return $this->errorResponse($e->getMessage());
+        }
+    }
+
+    /**
      * Get color for booking status
      */
     private function getBookingColor(string $status): string
     {
         return match ($status) {
             'pending' => '#FFA500',
+            'under_review' => '#FFD700',
             'confirmed' => '#008000',
             'active' => '#0000FF',
             'completed' => '#808080',
@@ -424,6 +485,7 @@ class BookingController extends Controller
             'extension_requested' => '#FF6347',
             'unreasonable_delay' => '#FFA500',
             'under_dispute' => '#DC143C',
+            'dispute_opened' => '#8B0000',
             default => '#000000',
         };
     }

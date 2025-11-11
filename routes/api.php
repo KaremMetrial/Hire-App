@@ -124,6 +124,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/{id}/submit-return-procedure', 'submitReturnProcedure');
             Route::post('/{id}/request-extension', 'requestExtension');
             Route::get('/{id}/procedures', 'getProcedures');
+            Route::get('/history', 'history');
         });
 
         // Accident Reports

@@ -11,6 +11,12 @@
 
     class StoreCarRequest extends FormRequest
     {
+        public function prepareForValidation()
+        {
+            if (! $this->has('rental_shop_id') || $this->rental_shop_id == null) {
+                $this->merge(['rental_shop_id' => $this->user()->rentalShops()->first()->id]);
+            }
+        }
         public function authorize(): bool
         {
             return true;
@@ -28,7 +34,9 @@
                 'category_id' => ['required', 'exists:categories,id'],
                 'rental_shop_id' => ['required', 'exists:rental_shops,id'],
                 'city_id' => ['required', 'exists:cities,id'],
-                'rental_shop_rule' => ['required', 'string'],
+                // Rules
+                'rules' => ['required', 'array', 'min:1'],
+                'rules.*.text' => ['required', 'string', 'max:500'],
 
                 // Images
                 'images' => ['required', 'array'],
@@ -97,7 +105,9 @@
                 'transmission_id' => __('validation.attributes.transmission'),
                 'num_of_seat' => __('validation.attributes.num_of_seat'),
                 'kilometers' => __('validation.attributes.kilometers'),
-                'rental_shop_rule' => __('validation.attributes.rental_shop_rule'),
+                // Rules
+                'rules' => __('validation.attributes.rules'),
+                'rules.*.text' => __('validation.attributes.rule_text'),
 
                 // Images
                 'images' => __('validation.attributes.images'),

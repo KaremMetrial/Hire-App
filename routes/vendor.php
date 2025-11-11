@@ -1,7 +1,7 @@
  <?php
 
 use App\Http\Controllers\Api\BrandController;
-use App\Http\Controllers\Api\CarController;
+use App\Http\Controllers\Api\Vendor\CarController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CountryController;
 use App\Http\Controllers\Api\CustomerTypeController;
@@ -158,6 +158,9 @@ Route::prefix('v1')->group(function () {
             Route::post('/{id}/confirm-return-procedure', 'confirmReturnProcedure');
             Route::post('/{id}/approve-extension', 'approveExtension');
             Route::post('/{id}/reject-extension', 'rejectExtension');
+            Route::post('/{id}/move-to-under-review', 'moveToUnderReview');
+            Route::post('/{id}/open-dispute', 'openDispute');
+            Route::post('/{id}/move-under-dispute', 'moveUnderDispute');
             Route::get('/{id}/procedures', 'getProcedures');
         });
     });

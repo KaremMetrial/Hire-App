@@ -48,12 +48,12 @@ class BookingStatsWidget extends BaseWidget
                 ->descriptionIcon('heroicon-o-check-circle')
                 ->color('success'),
 
-            Stat::make(__('filament.widgets.total_revenue'), 'EGP '.number_format($totalRevenue, 2))
+            Stat::make(__('filament.widgets.total_revenue'), 'JOD '.number_format($totalRevenue, 2))
                 ->description(__('filament.widgets.from_completed_bookings'))
                 ->descriptionIcon('heroicon-o-currency-dollar')
                 ->color('success'),
 
-            Stat::make(__('filament.widgets.this_month_revenue'), 'EGP '.number_format($thisMonthRevenue, 2))
+            Stat::make(__('filament.widgets.this_month_revenue'), 'JOD '.number_format($thisMonthRevenue, 2))
                 ->description(now()->translatedFormat('F Y'))
                 ->descriptionIcon(Heroicon::ArrowTrendingUp)
                 ->color('success'),

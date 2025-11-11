@@ -25,7 +25,7 @@ interface BookingRepositoryInterface
 
     public function getUserBookings(int $userId, ?array $statuses = null, ?int $perPage = 15): LengthAwarePaginator;
 
-    public function getVendorBookings(int $vendorId, ?string $status = null, ?int $perPage = 15): LengthAwarePaginator;
+    public function getVendorBookings(int $vendorId, ?array $statuses = null, ?int $perPage = 15): LengthAwarePaginator;
 
     public function getAllBookings(?string $status = null, ?string $dateFrom = null, ?string $dateTo = null, ?int $perPage = 15): LengthAwarePaginator;
 

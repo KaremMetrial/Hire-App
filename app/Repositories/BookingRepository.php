@@ -112,7 +112,7 @@ class BookingRepository implements BookingRepositoryInterface
         return $query->orderBy('created_at', 'desc')->paginate($perPage);
     }
 
-    public function getVendorBookings(int $vendorId, ?string $status = null, ?int $perPage = 15): LengthAwarePaginator
+    public function getVendorBookings(int $vendorId, ?array $statuses = null, ?int $perPage = 15): LengthAwarePaginator
     {
         $rentalShopIds = $this->getVendorRentalShopIds($vendorId);
 
@@ -132,8 +132,8 @@ class BookingRepository implements BookingRepositoryInterface
                 'procedures'
             ]);
 
-        if ($status) {
-            $query->where('status', $status);
+        if ($statuses) {
+            $query->whereIn('status', $statuses);
         }
 
         return $query->orderBy('created_at', 'desc')->paginate($perPage);

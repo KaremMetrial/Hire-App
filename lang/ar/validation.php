@@ -265,7 +265,8 @@ return [
         'reason' => 'السبب',
 
         'insurances' => 'التامين',
-        'rental_shop_rule' => 'قواعد المكتب',
+        'rules' => 'قواعد السيارة',
+        'rule_text' => 'نص القاعدة',
         'extra_services' => 'الخدمات الإضافية',
         'extra_service' => 'الخدمة الإضافية',
         'custom_extra_services' => 'الخدمات الإضافية المخصصة',

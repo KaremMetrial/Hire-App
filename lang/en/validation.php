@@ -264,7 +264,8 @@ return [
         'reason' => 'Reason',
 
         'insurances' => 'Insurances',
-        'rental_shop_rule' => 'Rental Shop Rule',
+        'rules' => 'Car Rules',
+        'rule_text' => 'Rule Text',
         'extra_services' => 'Extra services',
         'extra_service' => 'Extra service',
         'custom_extra_services' => 'Custom extra services',

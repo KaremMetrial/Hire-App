@@ -29,7 +29,9 @@ class UpdateCarRequest extends FormRequest
             'category_id' => ['nullable', 'exists:categories,id'],
             'rental_shop_id' => ['nullable', 'exists:rental_shops,id'],
             'city_id' => ['nullable', 'exists:cities,id'],
-            'rental_shop_rule' => ['nullable', 'string'],
+            // Rules
+            'rules' => ['nullable', 'array', 'min:1'],
+            'rules.*.text' => ['required', 'string', 'max:500'],
             'is_active' => ['nullable', 'boolean'],
 
             // Images

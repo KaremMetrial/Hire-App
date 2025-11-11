@@ -344,10 +344,10 @@ class BookingService
     /**
      * Get vendor bookings with filters
      */
-    public function getVendorBookings(int $vendorId, ?string $status = null, ?int $perPage = 15): LengthAwarePaginator
+    public function getVendorBookings(int $vendorId, ?array $statuses = null, ?int $perPage = 15): LengthAwarePaginator
     {
         // Use repository method instead of duplicating logic
-        return $this->bookingRepository->getVendorBookings($vendorId, $status, $perPage);
+        return $this->bookingRepository->getVendorBookings($vendorId, $statuses, $perPage);
     }
 
     /**
@@ -395,24 +395,30 @@ class BookingService
 
         $total = $query->count();
         $pending = $query->where('status', BookingStatusEnum::Pending->value)->count();
+        $underReview = $query->where('status', BookingStatusEnum::UnderReview->value)->count();
         $confirmed = $query->where('status', BookingStatusEnum::Confirmed->value)->count();
         $active = $query->where('status', BookingStatusEnum::Active->value)->count();
         $completed = $query->where('status', BookingStatusEnum::Completed->value)->count();
         $cancelled = $query->where('status', BookingStatusEnum::Cancelled->value)->count();
         $rejected = $query->where('status', BookingStatusEnum::Rejected->value)->count();
         $infoRequested = $query->where('status', BookingStatusEnum::InfoRequested->value)->count();
+        $underDispute = $query->where('status', BookingStatusEnum::UnderDispute->value)->count();
+        $disputeOpened = $query->where('status', BookingStatusEnum::DisputeOpened->value)->count();
 
         $totalRevenue = $query->where('status', BookingStatusEnum::Completed->value)->sum('total_price');
 
         return [
             'total' => $total,
             'pending' => $pending,
+            'under_review' => $underReview,
             'confirmed' => $confirmed,
             'active' => $active,
             'completed' => $completed,
             'cancelled' => $cancelled,
             'rejected' => $rejected,
             'info_requested' => $infoRequested,
+            'under_dispute' => $underDispute,
+            'dispute_opened' => $disputeOpened,
             'total_revenue' => $totalRevenue,
         ];
     }
@@ -1009,6 +1015,97 @@ class BookingService
             'pickup' => $procedures->where('type', 'pickup')->values(),
             'return' => $procedures->where('type', 'return')->values(),
         ];
+    }
+
+    /**
+     * Move booking to under review (Vendor action)
+     */
+    public function moveToUnderReview(int $bookingId, int $vendorId): Booking
+    {
+        return DB::transaction(function () use ($bookingId, $vendorId) {
+            $booking = $this->getBookingForVendor($bookingId, $vendorId);
+
+            if (!in_array($booking->status, [BookingStatusEnum::Pending->value, BookingStatusEnum::Confirmed->value, BookingStatusEnum::Active->value])) {
+                throw new Exception('Only pending, confirmed, or active bookings can be moved to under review');
+            }
+
+            $oldStatus = $booking->status;
+            $booking->update([
+                'status' => BookingStatusEnum::UnderReview->value,
+            ]);
+
+            // Dispatch status change event
+            $this->dispatchStatusChangeEvent($booking, $oldStatus->value, $booking->status->value, [
+                'changed_by_type' => 'vendor',
+                'changed_by_id' => $vendorId,
+                'notes' => 'Booking moved to under review by vendor',
+                'notify_vendor' => false,
+            ]);
+
+            return $booking->fresh();
+        });
+    }
+
+    /**
+     * Open dispute for booking (Vendor action)
+     */
+    public function openDispute(int $bookingId, int $vendorId, ?string $reason = null): Booking
+    {
+        return DB::transaction(function () use ($bookingId, $vendorId, $reason) {
+            $booking = $this->getBookingForVendor($bookingId, $vendorId);
+
+            if (!in_array($booking->status, [BookingStatusEnum::Active->value, BookingStatusEnum::Completed->value, BookingStatusEnum::UnderDelivery->value])) {
+                throw new Exception('Only active, completed, or under delivery bookings can have disputes opened');
+            }
+
+            $oldStatus = $booking->status;
+            $booking->update([
+                'status' => BookingStatusEnum::DisputeOpened->value,
+                'dispute_reason' => $reason,
+                'dispute_opened_at' => now(),
+            ]);
+
+            // Dispatch status change event
+            $this->dispatchStatusChangeEvent($booking, $oldStatus->value, $booking->status->value, [
+                'changed_by_type' => 'vendor',
+                'changed_by_id' => $vendorId,
+                'notes' => 'Dispute opened by vendor: ' . ($reason ?? 'No reason provided'),
+                'notify_vendor' => false,
+            ]);
+
+            return $booking->fresh();
+        });
+    }
+
+    /**
+     * Move booking under dispute (Vendor action)
+     */
+    public function moveUnderDispute(int $bookingId, int $vendorId, ?string $reason = null): Booking
+    {
+        return DB::transaction(function () use ($bookingId, $vendorId, $reason) {
+            $booking = $this->getBookingForVendor($bookingId, $vendorId);
+
+            if (!in_array($booking->status, [BookingStatusEnum::Active->value, BookingStatusEnum::Completed->value, BookingStatusEnum::UnderDelivery->value])) {
+                throw new Exception('Only active, completed, or under delivery bookings can be moved under dispute');
+            }
+
+            $oldStatus = $booking->status;
+            $booking->update([
+                'status' => BookingStatusEnum::UnderDispute->value,
+                'dispute_reason' => $reason,
+                'dispute_opened_at' => now(),
+            ]);
+
+            // Dispatch status change event
+            $this->dispatchStatusChangeEvent($booking, $oldStatus->value, $booking->status->value, [
+                'changed_by_type' => 'vendor',
+                'changed_by_id' => $vendorId,
+                'notes' => 'Booking moved under dispute by vendor: ' . ($reason ?? 'No reason provided'),
+                'notify_vendor' => false,
+            ]);
+
+            return $booking->fresh();
+        });
     }
 
 }
