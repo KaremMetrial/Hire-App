@@ -1,11 +1,11 @@
- <?php
+<?php
 
 use App\Http\Controllers\Api\BrandController;
 use App\Http\Controllers\Api\Vendor\CarController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CountryController;
 use App\Http\Controllers\Api\CustomerTypeController;
-use App\Http\Controllers\Api\DocumentController;
+use App\Http\Controllers\Api\Vendor\DocumentController;
 use App\Http\Controllers\Api\ExtraServiceController;
 use App\Http\Controllers\Api\FuelController;
 use App\Http\Controllers\Api\InsuranceController;
@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\OtpController;
 use App\Http\Controllers\Api\TransmissionController;
 use App\Http\Controllers\Api\Vendor\AuthController;
 use App\Http\Controllers\Api\Vendor\BookingController;
+use App\Http\Controllers\Api\Vendor\NotificationController;
 use App\Http\Controllers\Api\Vendor\NotificationSettingController;
 use App\Http\Controllers\Api\Vendor\RentalShopController;
 use App\Http\Controllers\Api\Vendor\VendorController;
@@ -143,6 +144,16 @@ Route::prefix('v1')->group(function () {
         Route::prefix('notification-setting')->controller(NotificationSettingController::class)->group(function () {
             Route::get('/show', 'show');
             Route::put('/update', 'update');
+        });
+
+        // Notifications
+        Route::prefix('notifications')->controller(NotificationController::class)->group(function () {
+            Route::get('/', 'index');
+            Route::get('/stats', 'stats');
+            Route::get('/{id}', 'show');
+            Route::put('/{id}/read', 'markAsRead');
+            Route::put('/mark-all-read', 'markAllAsRead');
+            Route::delete('/{id}', 'destroy');
         });
 
         // Booking

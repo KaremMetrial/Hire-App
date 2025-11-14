@@ -36,12 +36,12 @@ class BookingsTable
                     ->sortable()
                     ->toggleable(),
 
-                TextColumn::make('car.model.brand.name')
-                    ->label(__('filament.fields.car'))
+                TextColumn::make('car.carModel.brand.name')
+                    ->label(__('filament.fields.brand'))
                     ->searchable()
                     ->toggleable(),
 
-                TextColumn::make('car.model.name')
+                TextColumn::make('car.carModel.name')
                     ->label(__('filament.fields.model'))
                     ->searchable()
                     ->toggleable(),
@@ -73,7 +73,7 @@ class BookingsTable
                         'danger' => 'cancelled',
                         'danger' => 'rejected',
                     ])
-                    ->formatStateUsing(fn (?string $state): string => $state ? __('filament.statuses.'.$state) : '')
+                    ->formatStateUsing(fn ($state) => __('filament.statuses.'.($state instanceof \App\Enums\BookingStatusEnum ? $state->value : (string)$state)))
                     ->sortable()
                     ->toggleable(),
 
@@ -85,13 +85,13 @@ class BookingsTable
                         'success' => 'paid',
                         'secondary' => 'refunded',
                     ])
-                    ->formatStateUsing(fn (?string $state): string => $state ? __('filament.payment_status.'.$state) : '')
+                    ->formatStateUsing(fn ($state): string => __('filament.payment_status.'.($state instanceof \App\Enums\PaymentStatusEnum ? $state->value : $state)))
                     ->sortable()
                     ->toggleable(),
 
                 TextColumn::make('total_price')
                     ->label(__('filament.fields.total_price'))
-                    ->money('EGP')
+                    ->money('JOD')
                     ->sortable()
                     ->toggleable(),
 

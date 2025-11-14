@@ -154,33 +154,33 @@ class BookingResource extends Resource
                     ->components([
                             Infolists\Components\TextEntry::make('rental_price')
                             ->label(__('filament.fields.rental_price'))
-                            ->money('EGP'),
+                            ->money('JOD'),
                             Infolists\Components\TextEntry::make('delivery_fee')
                             ->label(__('filament.fields.delivery_fee'))
-                            ->money('EGP'),
+                            ->money('JOD'),
                             Infolists\Components\TextEntry::make('extra_services_total')
                             ->label(__('filament.fields.extra_services_total'))
-                            ->money('EGP'),
+                            ->money('JOD'),
                             Infolists\Components\TextEntry::make('insurance_total')
                             ->label(__('filament.fields.insurance_total'))
-                            ->money('EGP'),
+                            ->money('JOD'),
                             Infolists\Components\TextEntry::make('mileage_fee')
                             ->label(__('filament.fields.mileage_fee'))
-                            ->money('EGP'),
+                            ->money('JOD'),
                             Infolists\Components\TextEntry::make('tax')
                             ->label(__('filament.fields.tax'))
-                            ->money('EGP'),
+                            ->money('JOD'),
                             Infolists\Components\TextEntry::make('discount')
                             ->label(__('filament.fields.discount'))
-                            ->money('EGP'),
+                            ->money('JOD'),
                             Infolists\Components\TextEntry::make('total_price')
                             ->label(__('filament.fields.total_price'))
-                            ->money('EGP')
+                            ->money('JOD')
                             ->weight('bold')
                             ->size('lg'),
                             Infolists\Components\TextEntry::make('deposit_amount')
                             ->label(__('filament.fields.deposit_amount'))
-                            ->money('EGP'),
+                            ->money('JOD'),
                         ])
                     ->columns(3),
 
@@ -208,7 +208,7 @@ class BookingResource extends Resource
                                     ->label(__('filament.fields.service')),
                                 Infolists\Components\TextEntry::make('price')
                                     ->label(__('filament.fields.price'))
-                                    ->money('EGP'),
+                                    ->money('JOD'),
                                 Infolists\Components\TextEntry::make('quantity')
                                     ->label(__('filament.fields.quantity')),
                             ])
@@ -225,10 +225,10 @@ class BookingResource extends Resource
                                     ->label(__('filament.fields.insurance_type')),
                                 Infolists\Components\TextEntry::make('price')
                                     ->label(__('filament.fields.price'))
-                                    ->money('EGP'),
+                                    ->money('JOD'),
                                 Infolists\Components\TextEntry::make('deposit_price')
                                     ->label(__('filament.fields.deposit_amount'))
-                                    ->money('EGP'),
+                                    ->money('JOD'),
                             ])
                             ->columns(3),
                         ])
@@ -241,7 +241,7 @@ class BookingResource extends Resource
                             ->components([
                                 Infolists\Components\TextEntry::make('amount')
                                     ->label(__('filament.fields.amount'))
-                                    ->money('EGP'),
+                                    ->money('JOD'),
                                 Infolists\Components\TextEntry::make('payment_method')
                                     ->label(__('filament.fields.payment_method'))
                                     ->formatStateUsing(fn (string $state): string => match ($state) {

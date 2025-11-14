@@ -42,7 +42,8 @@ return [
         'booking_chart_heading' => 'اتجاه الحجوزات الشهرية',
         'bookings_count' => 'عدد الحجوزات',
         'revenue_chart_heading' => 'اتجاه الإيرادات الشهرية',
-        'revenue_egp' => 'الإيرادات (جنيه)',
+        'revenue_egp' => 'الإيرادات (دينار أردني)',
+        'revenue_jod' => 'الإيرادات (دينار أردني)',
 
         // Booking Statuses
         'status_pending' => 'قيد الانتظار',

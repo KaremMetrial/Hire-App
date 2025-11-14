@@ -36,6 +36,9 @@ class DocumentController extends Controller
 
     public function addRequirement(Request $request): JsonResponse
     {
-        $this->documentService->addRequirement($request->all());
+        $document = $this->documentService->addRequirement($request->all());
+        return $this->successResponse([
+            'document' => new DocumentResource($document),
+        ], __('Document added successfully'));
     }
 }

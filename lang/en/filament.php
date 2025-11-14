@@ -42,7 +42,8 @@ return [
         'booking_chart_heading' => 'Monthly Bookings Trend',
         'bookings_count' => 'Number of Bookings',
         'revenue_chart_heading' => 'Monthly Revenue Trend',
-        'revenue_egp' => 'Revenue (EGP)',
+        'revenue_egp' => 'Revenue (JOD)',
+        'revenue_jod' => 'Revenue (JOD)',
 
         // Booking Statuses
         'status_pending' => 'Pending',

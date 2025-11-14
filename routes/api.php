@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\BrandController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CountryController;
+use App\Http\Controllers\Api\DocumentController;
 use App\Http\Controllers\Api\FuelController;
 use App\Http\Controllers\Api\ModelController;
 use App\Http\Controllers\Api\OtpController;
@@ -52,6 +53,13 @@ Route::prefix('v1')->group(function () {
     Route::prefix('categories')->controller(CategoryController::class)->group(function () {
         Route::get('/', 'index');
         Route::get('/{category}', 'show');
+    });
+
+    // Document
+    Route::prefix('documents')->controller(DocumentController::class)->group(function () {
+        Route::get('/', 'index');
+        Route::get('/{document}', 'show');
+        Route::post('/requirement', 'addRequirement');
     });
 
     // OTP

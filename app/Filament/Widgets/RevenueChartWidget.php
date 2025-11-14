@@ -35,7 +35,7 @@ class RevenueChartWidget extends ChartWidget
         return [
             'datasets' => [
                 [
-                    'label' => __('filament.widgets.revenue_egp'),
+                    'label' => __('filament.widgets.revenue_jod'),
                     'data' => $data,
                     'backgroundColor' => 'rgba(34, 197, 94, 0.1)',
                     'borderColor' => 'rgb(34, 197, 94)',

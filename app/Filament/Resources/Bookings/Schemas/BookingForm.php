@@ -132,62 +132,62 @@ class BookingForm
                             TextInput::make('rental_price')
                             ->label(__('filament.fields.rental_price'))
                             ->numeric()
-                            ->prefix('EGP')
+                            ->prefix('JOD')
                             ->disabled()
                             ->columnSpan(1),
 
                             TextInput::make('delivery_fee')
                             ->label(__('filament.fields.delivery_fee'))
                             ->numeric()
-                            ->prefix('EGP')
+                            ->prefix('JOD')
                             ->disabled()
                             ->columnSpan(1),
 
                             TextInput::make('extra_services_total')
                             ->label(__('filament.fields.extra_services_total'))
                             ->numeric()
-                            ->prefix('EGP')
+                            ->prefix('JOD')
                             ->disabled()
                             ->columnSpan(1),
 
                             TextInput::make('insurance_total')
                             ->label(__('filament.fields.insurance_total'))
                             ->numeric()
-                            ->prefix('EGP')
+                            ->prefix('JOD')
                             ->disabled()
                             ->columnSpan(1),
 
                             TextInput::make('mileage_fee')
                             ->label(__('filament.fields.mileage_fee'))
                             ->numeric()
-                            ->prefix('EGP')
+                            ->prefix('JOD')
                             ->disabled()
                             ->columnSpan(1),
 
                             TextInput::make('tax')
                             ->label(__('filament.fields.tax'))
                             ->numeric()
-                            ->prefix('EGP')
+                            ->prefix('JOD')
                             ->disabled()
                             ->columnSpan(1),
 
                             TextInput::make('discount')
                             ->label(__('filament.fields.discount'))
                             ->numeric()
-                            ->prefix('EGP')
+                            ->prefix('JOD')
                             ->columnSpan(1),
 
                             TextInput::make('total_price')
                             ->label(__('filament.fields.total_price'))
                             ->numeric()
-                            ->prefix('EGP')
+                            ->prefix('JOD')
                             ->disabled()
                             ->columnSpan(1),
 
                             TextInput::make('deposit_amount')
                             ->label(__('filament.fields.deposit_amount'))
                             ->numeric()
-                            ->prefix('EGP')
+                            ->prefix('JOD')
                             ->disabled()
                             ->columnSpan(1),
                         ])
